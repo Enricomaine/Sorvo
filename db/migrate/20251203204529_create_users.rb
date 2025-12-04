@@ -4,6 +4,7 @@ class CreateUsers < ActiveRecord::Migration[8.0]
       t.string :username
       t.string :password_digest
       t.integer :role
+      t.boolean :active, default: true
 
       t.timestamps
     end
