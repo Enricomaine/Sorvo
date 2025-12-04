@@ -2,7 +2,7 @@ class LoginController < ApplicationController
   skip_before_action :authenticate_request!
   SECRET_KEY = Rails.application.secret_key_base
 
-  def create
+  def login
     user = User.find_by(username: login_params[:username])
 
     unless user
@@ -15,6 +15,10 @@ class LoginController < ApplicationController
 
     token = jwt_encode(user_id: user.id, role: user.role)
     render json: { token: token }, status: :ok
+  end
+
+  def logout
+    render json: { message: "Logged out successfully" }, status: :ok
   end
 
   private
