@@ -2,6 +2,10 @@ Rails.application.routes.draw do
   resources :users
   post "login", to: "login#login"
   delete "logout", to: "login#logout"
+
+  post "password/forgot", to: "password#forgot"
+  post "password/reset", to: "password#reset"
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
