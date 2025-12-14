@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_14_152844) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_14_154124) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_152844) do
     t.datetime "updated_at", null: false
     t.string "email"
     t.bigint "seller_id", null: false
+    t.bigint "price_table_id", null: false
+    t.index ["price_table_id"], name: "index_customers_on_price_table_id"
     t.index ["seller_id"], name: "index_customers_on_seller_id"
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
@@ -59,6 +61,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_152844) do
     t.index ["customer_id"], name: "index_orders_on_customer_id"
   end
 
+  create_table "price_table_items", force: :cascade do |t|
+    t.float "percentage"
+    t.float "final_price"
+    t.float "base_price"
+    t.bigint "item_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["item_id"], name: "index_price_table_items_on_item_id"
+  end
+
+  create_table "price_tables", force: :cascade do |t|
+    t.string "description"
+    t.string "observation"
+    t.bigint "seller_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["seller_id"], name: "index_price_tables_on_seller_id"
+  end
+
   create_table "sellers", force: :cascade do |t|
     t.string "name"
     t.string "document"
@@ -84,10 +105,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_152844) do
     t.index ["seller_id"], name: "index_users_on_seller_id"
   end
 
+  add_foreign_key "customers", "price_tables"
   add_foreign_key "customers", "sellers"
   add_foreign_key "customers", "users"
   add_foreign_key "order_items", "items"
   add_foreign_key "order_items", "orders"
   add_foreign_key "orders", "customers"
+  add_foreign_key "price_table_items", "items"
+  add_foreign_key "price_tables", "sellers"
   add_foreign_key "users", "users", column: "seller_id"
 end

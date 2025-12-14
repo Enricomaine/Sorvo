@@ -1,6 +1,11 @@
 Rails.application.routes.draw do
   resources :users
   resources :customers
+  resources :items
+  resources :orders
+  resources :sellers
+  resources :price_tables
+
   post "login", to: "login#login"
   delete "logout", to: "login#logout"
 
