@@ -1,12 +1,12 @@
 class UsersController < ApplicationController
-  before_action :set_user, only: %i[ show update destroy ]
+  before_action :set_user, only: %i[ show ]
 
   # GET /users
-  def index
-    @users = User.all
+  # def index
+  #   @users = User.all
 
-    render json: @users
-  end
+  #   render json: @users
+  # end
 
   # GET /users/1
   def show
@@ -14,38 +14,48 @@ class UsersController < ApplicationController
   end
 
   # POST /users
-  def create
-    @user = User.new(user_params)
+  # def create
+  #   user_role = @current_user.role.to_i
+  #   if user_role = 1
+  #     if params[:user][:role].to_i != 2
+  #       render json: { error: "Sellers can only register customers" }
+  #     end
+  #   end
 
-    if @user.save
-      render json: @user, status: :created, location: @user
-    else
-      render json: @user.errors, status: :unprocessable_content
-    end
-  end
+  #   verify_seller_id
+  #   @user = User.new(user_params)
+  #   if @user.save
+  #     render json: @user, status: :created, location: @user
+  #   else
+  #     render json: @user.errors, status: :unprocessable_content
+  #   end
+  # end
 
   # PATCH/PUT /users/1
-  def update
-    if @user.update(user_params)
-      render json: @user
-    else
-      render json: @user.errors, status: :unprocessable_content
-    end
-  end
+  # def update
+  #   verify_seller_id
+  #   if @user.update(user_params)
+  #     render json: @user
+  #   else
+  #     render json: @user.errors, status: :unprocessable_content
+  #   end
+  # end
 
-  # DELETE /users/1
-  def destroy
-    @user.destroy!
-  end
+  # # DELETE /users/1
+  # def destroy
+  #   @user.destroy!
+  # end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_user
-      @user = User.find(params.expect(:id))
-    end
+  def set_user
+    @user = User.find(params[:id])
+  end
 
-    # Only allow a list of trusted parameters through.
-    def user_params
-      params.expect(user: [ :username, :password_digest, :role ])
-    end
+  def user_params
+    params.expect(user: [
+      :username,
+      :password,
+      :role
+    ])
+  end
 end

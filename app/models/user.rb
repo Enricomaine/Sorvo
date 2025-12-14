@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   has_secure_password
 
-  has_one :seller
+  has_one :seller 
   has_one :customer
 
   validates :username, presence: true, uniqueness: true

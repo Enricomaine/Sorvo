@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   resources :users
+  resources :customers
   post "login", to: "login#login"
   delete "logout", to: "login#logout"
 
