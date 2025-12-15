@@ -38,13 +38,15 @@ class ItemsController < ApplicationController
     @item.seller_id = get_seller_id
     @item.active = true
 
+    # Attach main_image BEFORE saving so validation passes
     main_image_param = params.dig(:item, :main_image)
     @item.main_image.attach(main_image_param) if main_image_param.present?
 
-    if @item.save
-      images_param = params.dig(:item, :images)
-      @item.images.attach(images_param) if images_param.present?
+    # Attach additional images before saving
+    images_param = params.dig(:item, :images)
+    @item.images.attach(images_param) if images_param.present?
 
+    if @item.save
       render json: item_with_images(@item), status: :created, location: @item
     else
       render json: @item.errors, status: :unprocessable_entity

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_14_154124) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_15_014318) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,7 +25,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_154124) do
     t.datetime "updated_at", null: false
     t.string "email"
     t.bigint "seller_id", null: false
-    t.bigint "price_table_id", null: false
+    t.bigint "price_table_id"
     t.index ["price_table_id"], name: "index_customers_on_price_table_id"
     t.index ["seller_id"], name: "index_customers_on_seller_id"
     t.index ["user_id"], name: "index_customers_on_user_id"
@@ -39,6 +39,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_154124) do
     t.boolean "active"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "seller_id", null: false
+    t.index ["seller_id"], name: "index_items_on_seller_id"
   end
 
   create_table "order_items", force: :cascade do |t|
@@ -89,6 +91,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_154124) do
     t.boolean "active"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_sellers_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -108,10 +112,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_14_154124) do
   add_foreign_key "customers", "price_tables"
   add_foreign_key "customers", "sellers"
   add_foreign_key "customers", "users"
+  add_foreign_key "items", "sellers"
   add_foreign_key "order_items", "items"
   add_foreign_key "order_items", "orders"
   add_foreign_key "orders", "customers"
   add_foreign_key "price_table_items", "items"
   add_foreign_key "price_tables", "sellers"
+  add_foreign_key "sellers", "users"
   add_foreign_key "users", "users", column: "seller_id"
 end

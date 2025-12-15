@@ -59,6 +59,7 @@ class SellersController < ApplicationController
       :phone, 
       :email, 
       :active,
+      :person_type,
       user_attributes: [
         :id,
         :username, 

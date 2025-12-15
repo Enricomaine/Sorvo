@@ -9,7 +9,7 @@ class Customer < ApplicationRecord
 
   enum :person_type, { person: 0, business: 1 }
 
-  validates :legal_name, :trade_name, :person_type, presence: true 
+  validates :name, :person_type, presence: true 
 
   validate :cpf_must_be_valid, if: -> { person_type == "person"}
   validate :cnpj_must_be_valid, if: -> { person_type == "business" }
@@ -23,22 +23,22 @@ class Customer < ApplicationRecord
   end
 
   def cnpj_must_be_valid
-    return if cnpj.blank?
+    return if document.blank?
 
     begin 
-      Cnpj.new(cnpj)
+      Cnpj.new(document)
     rescue ArgumentError => e
-      errors.add(:cnpj, e.message)
+      errors.add(:document, e.message)
     end
   end
 
   def cpf_must_be_valid
-    return if cpf.blank?
+    return if document.blank?
 
     begin 
-      Cpf.new(cpf)
+      Cpf.new(document)
     rescue ArgumentError => e
-      errors.add(:cpf, e.message)
+      errors.add(:document, e.message)
     end
   end
 end

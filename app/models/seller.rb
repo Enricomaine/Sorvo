@@ -7,10 +7,14 @@ class Seller < ApplicationRecord
 
   accepts_nested_attributes_for :user
 
-  validates :legal_name, :trade_name, :cnpj, presence: true
-  validate :cnpj_must_be_valid
+  enum :person_type, { person: 0, business: 1 }
+
+  validates :name, :document, :person_type, presence: true
 
   before_validation :set_user_role
+
+  validate :cpf_must_be_valid, if: -> { person_type == "person"}
+  validate :cnpj_must_be_valid, if: -> { person_type == "business" }
 
   private 
 
@@ -19,12 +23,22 @@ class Seller < ApplicationRecord
   end
 
   def cnpj_must_be_valid
-    return if cnpj.blank?
+    return if document.blank?
 
     begin
-      Cnpj.new(cnpj)
+      Cnpj.new(document)
     rescue ArgumentError => e 
-      errors.add(:cnpj, e.message)
+      errors.add(:document, e.message)
+    end
+  end
+
+  def cpf_must_be_valid
+    return if document.blank?
+
+    begin 
+      Cpf.new(document)
+    rescue ArgumentError => e
+      errors.add(:document, e.message)
     end
   end
 end
