@@ -1,8 +1,8 @@
 class PriceTablesController < ApplicationController
   before_action :set_price_table, only: %i[ show update destroy ]
-  
+
   before_action -> { require_role(:seller) }
-  
+
   # GET /price_tables
   def index
     @price_tables = PriceTable.where(seller_id: get_seller_id)
@@ -31,7 +31,7 @@ class PriceTablesController < ApplicationController
       return render json: { error: "Price tables must have at least one item" }, status: :unprocessable_entity
     end
 
-    item_ids = items_attrs.map{ |item| item[:item_id] }
+    item_ids = items_attrs.map { |item| item[:item_id] }
     valid_item_ids = Item.where(id: item_ids, seller_id: get_seller_id).pluck(:id)
     invalid_items = item_ids - valid_item_ids
 
@@ -40,9 +40,9 @@ class PriceTablesController < ApplicationController
     end
 
 
-    ActiveRecord::Base.transaction do 
-      if @price_table.save 
-        render json: @price_table.as_json(include: :price_table_items), status: :created 
+    ActiveRecord::Base.transaction do
+      if @price_table.save
+        render json: @price_table.as_json(include: :price_table_items), status: :created
       else
         render json: @price_table.errors, status: :unprocessable_entity
         raise ActiveRecord::Rollback
@@ -79,8 +79,8 @@ class PriceTablesController < ApplicationController
 
   def price_table_params
     params.expect(
-      price_table: [ 
-        :description, 
+      price_table: [
+        :description,
         :observation,
         price_table_items_attributes: [
           [

@@ -7,7 +7,7 @@ class OrdersController < ApplicationController
   def index
     if get_customer_id.present?
       @orders = Order.includes(:order_items).where(customer_id: get_customer_id)
-    else 
+    else
       @orders = Order.includes(:customer, :order_items).where(seller_id: get_seller_id)
     end
 
@@ -15,7 +15,7 @@ class OrdersController < ApplicationController
       total_value = order.order_items.sum { |item| item.quantity.to_f * item.unit_price.to_f }
 
       order.as_json(
-        only: [:id, :customer_id, :seller_id, :status, :created_at],
+        only: [ :id, :customer_id, :seller_id, :status, :created_at ],
         include: {
           customer: { only: :trade_name }
         }
@@ -58,7 +58,7 @@ class OrdersController < ApplicationController
       return render json: { error: "Order must have at least one item" }, status: :unprocessable_entity
     end
 
-    item_ids = items_attrs.map{ |item| item[:item_id] }
+    item_ids = items_attrs.map { |item| item[:item_id] }
     valid_items_ids = Item.where(id: item_ids, seller_id: get_seller_id).pluck(:id)
     invalid_items = item_ids - valid_items_ids
 
@@ -80,8 +80,8 @@ class OrdersController < ApplicationController
       )
     end
 
-    ActiveRecord::Base.transaction do 
-      if @order.save 
+    ActiveRecord::Base.transaction do
+      if @order.save
         render json: @order.as_json(include: :order_items), status: :created
       else
         render json: @order.errors, status: :unprocessable_entity
@@ -92,7 +92,7 @@ class OrdersController < ApplicationController
 
   # PATCH/PUT /orders/1
   def update
-    # if @order.seller_id != get_seller_id 
+    # if @order.seller_id != get_seller_id
     #   return render json: { error: "Unavailable order" }, status: :forbidden
     # end
 
@@ -117,13 +117,13 @@ class OrdersController < ApplicationController
     @order = Order.includes(:order_items, :customer).find(params.expect(:id))
 
     if @order.seller.id != get_seller_id
-      return render json: { error: "Unavailable order" }, status: :forbidden
+      render json: { error: "Unavailable order" }, status: :forbidden
     end
   end
 
   def order_params
     params.expect(
-      order: [ 
+      order: [
         :observation,
         :status,
         :customer_id,

@@ -1,4 +1,4 @@
-class Item < ApplicationRecord 
+class Item < ApplicationRecord
   belongs_to :seller
 
   has_many_attached :images

@@ -10,9 +10,9 @@ class CustomersController < ApplicationController
                   .where(seller_id: get_seller_id, active: true)
 
     render json: @customers.as_json(
-      include: { 
-        user: { only: [:username] },
-        price_table: { only: [:description] } 
+      include: {
+        user: { only: [ :username ] },
+        price_table: { only: [ :description ] }
       })
   end
 
@@ -45,7 +45,7 @@ class CustomersController < ApplicationController
     end
 
     if @customer.update(customer_params)
-      render json: @customer.as_json(include: { user: { only: [:username] } })
+      render json: @customer.as_json(include: { user: { only: [ :username ] } })
     else
       render json: @customer.errors, status: :unprocessable_entity
     end
@@ -61,17 +61,17 @@ class CustomersController < ApplicationController
       @customer = Customer.find(params.expect(:id))
 
       if @customer.seller.id != get_seller_id
-        return render json: { error: "Unavailable customer" }, status: :forbidden
+        render json: { error: "Unavailable customer" }, status: :forbidden
       end
     end
 
     def customer_params
-      params.expect(customer: [ 
-        :name, 
+      params.expect(customer: [
+        :name,
         :document,
-        :phone, 
+        :phone,
         :email,
-        :person_type, 
+        :person_type,
         :price_table_id,
         :active,
          user_attributes: [

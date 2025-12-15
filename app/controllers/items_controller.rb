@@ -20,9 +20,9 @@ class ItemsController < ApplicationController
         next unless item
         row.merge(item_with_main_image(item))
       end
-    else 
+    else
       @items = Item.where(seller_id: get_seller_id).map { |item| item_with_main_image(item) }
-    end      
+    end
 
     render json: @items
   end
@@ -84,7 +84,7 @@ class ItemsController < ApplicationController
   def remove_image
     image = @item.images.find(params[:image_id])
     image.purge
-    
+
     render json: item_with_images(@item)
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Image not found" }, status: :not_found
@@ -95,7 +95,7 @@ class ItemsController < ApplicationController
     @item = Item.find(params.expect(:id))
 
     if @item.seller.id != get_seller_id
-      return render json: { error: I18n.t("unavailable_item") }, status: :forbidden
+      render json: { error: I18n.t("unavailable_item") }, status: :forbidden
     end
   end
 

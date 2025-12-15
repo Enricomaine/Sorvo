@@ -9,23 +9,23 @@ class Customer < ApplicationRecord
 
   enum :person_type, { person: 0, business: 1 }
 
-  validates :name, :person_type, presence: true 
+  validates :name, :person_type, presence: true
 
-  validate :cpf_must_be_valid, if: -> { person_type == "person"}
+  validate :cpf_must_be_valid, if: -> { person_type == "person" }
   validate :cnpj_must_be_valid, if: -> { person_type == "business" }
 
   before_validation :set_user_role
 
-  private 
+  private
 
-  def set_user_role 
+  def set_user_role
     user&.role = :customer if user.present?
   end
 
   def cnpj_must_be_valid
     return if document.blank?
 
-    begin 
+    begin
       Cnpj.new(document)
     rescue ArgumentError => e
       errors.add(:document, e.message)
@@ -35,7 +35,7 @@ class Customer < ApplicationRecord
   def cpf_must_be_valid
     return if document.blank?
 
-    begin 
+    begin
       Cpf.new(document)
     rescue ArgumentError => e
       errors.add(:document, e.message)

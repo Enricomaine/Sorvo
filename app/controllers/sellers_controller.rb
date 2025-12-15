@@ -5,7 +5,7 @@ class SellersController < ApplicationController
   # GET /sellers
   def index
     @sellers = Seller.includes(:user).all
-    render json: @sellers.as_json(include: { user: { only: [:username] } })
+    render json: @sellers.as_json(include: { user: { only: [ :username ] } })
   end
 
   # GET /sellers/1
@@ -17,14 +17,14 @@ class SellersController < ApplicationController
   def create
     @seller = Seller.new(seller_params)
     @seller.active = true
-    
+
     if @seller.save
       render json: @seller.as_json(include: :user), status: :created, location: @seller
     else
       render json: @seller.errors, status: :unprocessable_entity
     end
   end
-  
+
   # PATCH/PUT /sellers/1
   def update
     if params[:seller] && params[:seller][:user_attributes]
@@ -36,33 +36,33 @@ class SellersController < ApplicationController
     end
 
     if @seller.update(seller_params)
-      render json: @seller.as_json(include: { user: { only: [:username] } })
+      render json: @seller.as_json(include: { user: { only: [ :username ] } })
     else
       render json: @seller.errors, status: :unprocessable_entity
     end
   end
-  
+
   # DELETE /sellers/1
   def destroy
     @seller.destroy!
   end
-  
+
   private
   def set_seller
     @seller = Seller.find(params[:id])
   end
 
   def seller_params
-    params.expect(seller: [ 
-      :name, 
-      :document, 
-      :phone, 
-      :email, 
+    params.expect(seller: [
+      :name,
+      :document,
+      :phone,
+      :email,
       :active,
       :person_type,
       user_attributes: [
         :id,
-        :username, 
+        :username,
         :password
       ]
     ])

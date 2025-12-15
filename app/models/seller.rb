@@ -2,7 +2,7 @@ class Seller < ApplicationRecord
   belongs_to :user, dependent: :destroy
   has_many :customers, dependent: :destroy
   has_many :price_tables, dependent: :destroy
-  has_many :items, dependent: :destroy 
+  has_many :items, dependent: :destroy
   has_many :orders, dependent: :destroy
 
   accepts_nested_attributes_for :user
@@ -13,12 +13,12 @@ class Seller < ApplicationRecord
 
   before_validation :set_user_role
 
-  validate :cpf_must_be_valid, if: -> { person_type == "person"}
+  validate :cpf_must_be_valid, if: -> { person_type == "person" }
   validate :cnpj_must_be_valid, if: -> { person_type == "business" }
 
-  private 
+  private
 
-  def set_user_role 
+  def set_user_role
     user&.role = :seller if user.present?
   end
 
@@ -27,7 +27,7 @@ class Seller < ApplicationRecord
 
     begin
       Cnpj.new(document)
-    rescue ArgumentError => e 
+    rescue ArgumentError => e
       errors.add(:document, e.message)
     end
   end
@@ -35,7 +35,7 @@ class Seller < ApplicationRecord
   def cpf_must_be_valid
     return if document.blank?
 
-    begin 
+    begin
       Cpf.new(document)
     rescue ArgumentError => e
       errors.add(:document, e.message)

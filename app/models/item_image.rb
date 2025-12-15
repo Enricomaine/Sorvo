@@ -1,15 +1,15 @@
-class ItemImage < ApplicationRecord 
-  belongs_to :item 
+class ItemImage < ApplicationRecord
+  belongs_to :item
 
-  validates :image_url, presente: true 
-  validates :main, inclusion: { in: [true, false] }
+  validates :image_url, presente: true
+  validates :main, inclusion: { in: [ true, false ] }
 
   validate :only_one_main_image_per_item
 
-  private 
+  private
 
   def only_one_main_image_per_item
-    return unless main 
+    return unless main
 
     existing_main = ItemImage.where(item_id: item_id, main: true)
     if persisted?
