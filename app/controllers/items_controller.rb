@@ -95,7 +95,7 @@ class ItemsController < ApplicationController
     @item = Item.find(params.expect(:id))
 
     if @item.seller.id != get_seller_id
-      render json: { error: I18n.t("unavailable_item") }, status: :forbidden
+      render json: { error: "unavailable_item" }, status: :forbidden
     end
   end
 

@@ -9,11 +9,10 @@ RSpec.describe 'PriceTables API', type: :request do
   let!(:user) { seller_user }
 
   it 'creates, lists, shows, updates, and deletes a price table' do
-    skip 'PriceTablesController sets non-existent active attribute; skipping until fixed.'
     headers = auth_headers_for(user)
 
     # create
-    post '/price_tables', params: { price_table: { description: 'Tabela 1', active: true } }.to_json, headers: headers
+    post '/price_tables', params: { price_table: { description: 'Tabela 1', price_table_items_attributes: [ { code: "code", description: "description" } ] } }.to_json, headers: headers
     expect(response).to have_http_status(:created)
     pt_json = JSON.parse(response.body)
     id = pt_json['id']

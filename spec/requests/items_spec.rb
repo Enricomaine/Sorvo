@@ -11,18 +11,23 @@ RSpec.describe 'Items API', type: :request do
   it 'creates, lists, shows, updates, and deletes an item' do
     headers = auth_headers_for(user)
 
-    # create
+  # create
   file = fixture_file_upload(Rails.root.join('spec/fixtures/files/sample.png'), 'image/png')
-  post '/items', params: {
+  form_headers = headers.except('Content-Type', 'CONTENT_TYPE')
+
+  post '/items',
+    params: {
       item: {
         code: 'ITM-1',
         description: 'Item 1',
         observation: 'Obs',
         base_price: 10.5,
-    active: true,
-    main_image: file
+        active: true,
+        main_image: file
       }
-    }.to_json, headers: headers
+    },
+    headers: form_headers,
+    as: :multipart
 
     expect(response).to have_http_status(:created)
     item_json = JSON.parse(response.body)
@@ -39,7 +44,7 @@ RSpec.describe 'Items API', type: :request do
     expect(response).to have_http_status(:ok)
 
     # update
-  patch "/items/#{id}", params: { item: { description: 'Item 1 Edit' } }.to_json, headers: headers
+    patch "/items/#{id}", params: { item: { description: 'Item 1 Edit' } }.to_json, headers: headers
     expect(response).to have_http_status(:ok)
     expect(JSON.parse(response.body)['description']).to eq('Item 1 Edit')
 

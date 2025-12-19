@@ -14,7 +14,7 @@ RSpec.describe 'Orders API', type: :request do
     it
   end
   let!(:customer_user) { User.create!(username: 'cliente1', password_digest: BCrypt::Password.create('pass123'), role: :customer) }
-  let!(:customer) { Customer.create!(name: 'Cliente 1', document: '12345678901', phone: '11999999999', email: 'c1@example.com', person_type: 'individual', active: true, user: customer_user, seller: seller) }
+  let!(:customer) { Customer.create!(name: 'Cliente 1', document: '77338697060', phone: '11999999999', email: 'c1@example.com', person_type: 'person', active: true, user: customer_user, seller: seller) }
 
   it 'creates, lists, shows, updates, and deletes an order' do
     headers = auth_headers_for(user)

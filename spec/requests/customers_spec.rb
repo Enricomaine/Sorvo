@@ -16,7 +16,7 @@ RSpec.describe 'Customers API', type: :request do
       post '/customers', params: {
         customer: {
           name: 'Cliente 1',
-          document: '12345678901',
+          document: '77338697060',
           phone: '11999999999',
           email: 'c1@example.com',
           person_type: 'person',
