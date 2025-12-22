@@ -30,7 +30,7 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = true
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
@@ -52,6 +52,21 @@ Rails.application.configure do
 
   # Highlight code that enqueued background job in logs.
   config.active_job.verbose_enqueue_logs = true
+
+  # Use Sidekiq (Redis) for ActiveJob in dev
+  config.active_job.queue_adapter = :sidekiq
+
+  # SMTP for app account (override in credentials or ENV)
+  config.action_mailer.delivery_method = :smtp
+
+  config.action_mailer.smtp_settings = {
+    address: ENV.fetch("SMTP_ADDRESS", "smtp.example.com"),
+    port: Integer(ENV.fetch("SMTP_PORT", "587")),
+    user_name: ENV.fetch("SMTP_USER", ""),
+    password: ENV.fetch("SMTP_PASSWORD", ""),
+    authentication: (ENV.fetch("SMTP_AUTH", "plain").to_sym),
+    enable_starttls_auto: ENV.fetch("SMTP_STARTTLS", "true") == "true"
+  }
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true

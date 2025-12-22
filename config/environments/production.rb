@@ -46,9 +46,8 @@ Rails.application.configure do
   # Replace the default in-process memory cache store with a durable alternative.
   config.cache_store = :solid_cache_store
 
-  # Replace the default in-process and non-durable queuing backend for Active Job.
-  config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
+  # Use Sidekiq (Redis) for Active Job.
+  config.active_job.queue_adapter = :sidekiq
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
@@ -57,14 +56,16 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Outgoing SMTP server for app account (configure via credentials or ENV).
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    user_name: Rails.application.credentials.dig(:smtp, :user_name) || ENV["SMTP_USER"],
+    password: Rails.application.credentials.dig(:smtp, :password) || ENV["SMTP_PASSWORD"],
+    address: Rails.application.credentials.dig(:smtp, :address) || ENV.fetch("SMTP_ADDRESS", "smtp.example.com"),
+    port: Integer(Rails.application.credentials.dig(:smtp, :port) || ENV.fetch("SMTP_PORT", "587")),
+    authentication: (Rails.application.credentials.dig(:smtp, :authentication) || ENV.fetch("SMTP_AUTH", "plain")).to_sym,
+    enable_starttls_auto: (Rails.application.credentials.dig(:smtp, :enable_starttls_auto).nil? ? (ENV.fetch("SMTP_STARTTLS", "true") == "true") : Rails.application.credentials.dig(:smtp, :enable_starttls_auto))
+  }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

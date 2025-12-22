@@ -9,6 +9,35 @@ class PasswordController < ApplicationController
         reset_password_token: token,
         reset_password_sent_at: Time.current
       )
+      # Enqueue password reset email
+      begin
+        base_url = Rails.configuration.x.base_url
+        reset_link = "#{base_url}/password/reset?token=#{token}"
+        subject = "Redefinição de senha"
+        text_body = <<~TEXT
+          Olá,
+
+          Recebemos uma solicitação para redefinir sua senha.
+          Seu token de redefinição é: #{token}
+
+          Se você estiver usando um cliente/SPA, utilize este token para chamar o endpoint de redefinição.
+
+          Link sugerido (se houver página web para reset):
+          #{reset_link}
+
+          Caso não tenha feito esta solicitação, ignore este email.
+        TEXT
+
+        EmailSenderService.send_email(
+          account: :app,
+          to: user.email,
+          subject: subject,
+          text_body: text_body
+        )
+        Rails.logger.info("Password reset email enqueued for user ##{user.id}")
+      rescue => e
+        Rails.logger.error("Failed to enqueue password reset email for user ##{user.id}: #{e.message}")
+      end
       render json: { message: "Recovery email sent" }, status: :ok
     else
       render json: { error: "Email not found" }, status: :not_found

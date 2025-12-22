@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_20_170001) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_22_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -136,6 +136,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_20_170001) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.string "email", null: false
+    t.string "smtp_address"
+    t.integer "smtp_port"
+    t.string "smtp_user_name"
+    t.string "smtp_password"
+    t.string "smtp_authentication"
+    t.boolean "smtp_enable_starttls_auto"
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 

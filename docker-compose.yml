@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: sorvo
+      POSTGRES_PASSWORD: sorvo
+      POSTGRES_DB: sorvo_development
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sorvo -d sorvo_development"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    command: ./bin/rails server -b 0.0.0.0 -p 3000
+    environment:
+      RAILS_ENV: development
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://sorvo:sorvo@db:5432
+      BASE_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/rails
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq -e development -q default -q mailers
+    environment:
+      RAILS_ENV: development
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://sorvo:sorvo@db:5432
+    volumes:
+      - .:/rails
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

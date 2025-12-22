@@ -40,6 +40,9 @@ gem "dotenv"
 
 # Ensure stdlib mail dependencies are available across all environments
 gem "net-smtp"
+
+# Background jobs via Redis
+gem "sidekiq", "~> 7.2"
 gem "net-protocol"
 
 group :development, :test do
