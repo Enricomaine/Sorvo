@@ -4,7 +4,7 @@ require 'support/api_auth_helper'
 RSpec.describe 'Customers API', type: :request do
   include ApiAuthHelper
 
-  let!(:seller_user) { User.create!(username: 'seller1', password_digest: BCrypt::Password.create('secret'), role: :seller) }
+  let!(:seller_user) { User.create!(email: 'email3@email.com', password_digest: BCrypt::Password.create('secret'), role: :seller) }
   let!(:seller) { Seller.create!(name: 'Loja A', document: '52998224725', person_type: :person, user: seller_user) }
   let!(:user) { seller_user }
 
@@ -18,11 +18,10 @@ RSpec.describe 'Customers API', type: :request do
           name: 'Cliente 1',
           document: '77338697060',
           phone: '11999999999',
-          email: 'c1@example.com',
           person_type: 'person',
           active: true,
           user_attributes: {
-            username: 'cliente1',
+            email: 'email@email.com',
             password: 'pass123'
           }
         }

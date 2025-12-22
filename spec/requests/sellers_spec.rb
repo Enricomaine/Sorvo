@@ -4,8 +4,8 @@ require 'support/api_auth_helper'
 RSpec.describe 'Sellers API', type: :request do
   include ApiAuthHelper
 
-  let!(:admin_user) { User.create!(username: 'admin', password_digest: BCrypt::Password.create('secret'), role: :admin) }
-  let!(:seller) { Seller.create!(name: 'Loja A', document: '52998224725', person_type: :person, user: User.create!(username: 'seller1', password_digest: BCrypt::Password.create('secret'), role: :seller)) }
+  let!(:admin_user) { User.create!(email: 'admin@admin.com', password_digest: BCrypt::Password.create('secret'), role: :admin) }
+  let!(:seller) { Seller.create!(name: 'Loja A', document: '52998224725', person_type: :person, user: User.create!(email: 'email2@email.com', password_digest: BCrypt::Password.create('secret'), role: :seller)) }
   let!(:user) { admin_user }
 
   it 'lists and shows sellers (basic smoke)' do

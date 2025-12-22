@@ -3,9 +3,9 @@ require 'rails_helper'
 RSpec.describe 'Login API', type: :request do
   describe 'POST /login' do
     it 'returns token for valid credentials' do
-      user = User.create!(username: 'seller1', password_digest: BCrypt::Password.create('secret'), role: :seller)
+      user = User.create!(email: 'email@email.com', password_digest: BCrypt::Password.create('secret'), role: :seller)
 
-      post '/login', params: { login: { username: 'seller1', password: 'secret' } }
+      post '/login', params: { login: { email: 'email@email.com', password: 'secret' } }
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
@@ -13,7 +13,7 @@ RSpec.describe 'Login API', type: :request do
     end
 
     it 'rejects invalid credentials' do
-      post '/login', params: { login: { username: 'ghost', password: 'nope' } }
+      post '/login', params: { login: { email: 'ghost@email.com', password: 'nope' } }
       expect(response).to have_http_status(:unauthorized)
     end
   end
