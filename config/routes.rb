@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  resources :users
   resources :customers
   resources :items
   resources :orders
@@ -11,6 +10,8 @@ Rails.application.routes.draw do
 
   post "password/forgot", to: "password#forgot"
   post "password/reset", to: "password#reset"
+
+  delete "/items/:id/images/:image_id"
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

@@ -15,7 +15,6 @@ class ItemsController < ApplicationController
       ).prices_for(item_ids)
 
       @items = prices_map.values.map do |row|
-        puts row
         item = Item.find_by(id: row["id"])
         next unless item
         row.merge(item_with_main_image(item))
@@ -87,7 +86,7 @@ class ItemsController < ApplicationController
 
     render json: item_with_images(@item)
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Image not found" }, status: :not_found
+    render json: { error: "image not found" }, status: :not_found
   end
 
   private
@@ -95,7 +94,7 @@ class ItemsController < ApplicationController
     @item = Item.find(params.expect(:id))
 
     if @item.seller.id != get_seller_id
-      render json: { error: "unavailable_item" }, status: :forbidden
+      render json: { error: "unavailable item" }, status: :forbidden
     end
   end
 

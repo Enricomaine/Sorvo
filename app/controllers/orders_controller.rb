@@ -55,7 +55,7 @@ class OrdersController < ApplicationController
     items_attrs = order_params[:order_items_attributes]
 
     if items_attrs.blank? || items_attrs.empty?
-      return render json: { error: "Order must have at least one item" }, status: :unprocessable_entity
+      return render json: { error: "Order must have at least one item" }, status: :unprocessable_content
     end
 
     item_ids = items_attrs.map { |item| item[:item_id] }
@@ -63,7 +63,7 @@ class OrdersController < ApplicationController
     invalid_items = item_ids - valid_items_ids
 
     if invalid_items.any?
-      return render json: { error: "Invalid items: #{invalid_items.join(', ')}" }, stauts: :forbidden
+      return render json: { error: "Invalid items: #{invalid_items.join(', ')}" }, status: :forbidden
     end
 
     prices_map = ItemPriceService.new(

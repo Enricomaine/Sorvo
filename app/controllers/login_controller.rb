@@ -3,7 +3,7 @@ class LoginController < ApplicationController
   SECRET_KEY = Rails.application.secret_key_base
 
   def login
-    user = User.find_by(username: login_params[:username])
+    user = User.find_by(email: login_params[:email])
 
     unless user
       return render json: { error: "User not found" }, status: :unauthorized
@@ -29,6 +29,10 @@ class LoginController < ApplicationController
   end
 
   def login_params
-    params.expect(login: [ :email, :password ])
+    params.expect(
+      login: [
+        :email,
+        :password
+      ])
   end
 end

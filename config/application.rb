@@ -9,15 +9,11 @@ require "action_controller/railtie"
 require "action_view/railtie"
 require "action_cable/engine"
 require "sprockets/railtie" if defined?(Sprockets)
-# Include Action Mailer railtie so mailer configuration is available
 require "action_mailer/railtie"
 # If Action Mailbox is needed later, uncomment the following line
 # require "action_mailbox/engine"
 
-# Require the gems listed in Gemfile, including any gems
-# you've limited to :test, :development, or :production.
 begin
-  # Ensure default gems for Ruby 3.4 are available before libraries that depend on them.
   require "net/protocol"
   require "net/smtp"
 rescue LoadError
@@ -27,7 +23,6 @@ Bundler.require(*Rails.groups)
 
 module Sorvo
   class Application < Rails::Application
-    # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
 
     # Please, add to the `ignore` list any other `lib` subdirectories that do
