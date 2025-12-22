@@ -57,12 +57,11 @@ class SellersController < ApplicationController
       :name,
       :document,
       :phone,
-      :email,
       :active,
       :person_type,
       user_attributes: [
         :id,
-        :username,
+        :email,
         :password
       ]
     ])

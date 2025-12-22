@@ -5,7 +5,6 @@ class CreateSellers < ActiveRecord::Migration[8.0]
       t.string :document
       t.string :phone
       t.integer :person_type
-      t.string :email
       t.boolean :active
 
       t.timestamps

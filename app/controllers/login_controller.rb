@@ -29,6 +29,6 @@ class LoginController < ApplicationController
   end
 
   def login_params
-    params.expect(login: [ :username, :password ])
+    params.expect(login: [ :email, :password ])
   end
 end

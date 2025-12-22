@@ -70,13 +70,12 @@ class CustomersController < ApplicationController
         :name,
         :document,
         :phone,
-        :email,
         :person_type,
         :price_table_id,
         :active,
          user_attributes: [
           :id,
-          :username,
+          :email,
           :password
          ]
       ])
