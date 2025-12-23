@@ -67,3 +67,14 @@ ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 # Start server via Thruster by default, this can be overwritten at runtime
 EXPOSE 80
 CMD ["./bin/thrust", "./bin/rails", "server"]
+
+FROM ruby:3.3
+WORKDIR /app
+
+RUN apt-get update -y && apt-get install -y build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
+RUN gem install bundler -v 2.6.9
+
+ENV BUNDLER_VERSION=2.6.9
+EXPOSE 3000
+
+CMD ["bash", "-lc", "bundle install && if [ -x ./bin/rails ]; then bin/rails s -p 3000 -b 0.0.0.0; elif [ -f config.ru ]; then bundle exec rackup -p 3000 -o 0.0.0.0; else echo 'Erro para iniciar API'; sleep 3600; fi"]

@@ -1,10 +1,27 @@
-version: "3.9"
-
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - bundle_cache:/usr/local/bundle
+    environment:
+      - BUNDLE_PATH=/usr/local/bundle
+      - RAILS_ENV=development
+    command: >
+      bash -lc "bundle install &&
+      if [ -x ./bin/rails ]; then bin/rails s -p 3000 -b 0.0.0.0;
+      elif [ -f config.ru ]; then bundle exec rackup -p 3000 -o 0.0.0.0;
+      else echo 'Erro para iniciar API'; sleep 3600; fi"
+
   redis:
     image: redis:7
     ports:
-      - "6379:6379"
+      - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -18,7 +35,7 @@ services:
       POSTGRES_PASSWORD: sorvo
       POSTGRES_DB: sorvo_development
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -28,32 +45,32 @@ services:
       retries: 10
 
   web:
-    build: .
-    command: ./bin/rails server -b 0.0.0.0 -p 3000
-    environment:
-      RAILS_ENV: development
-      REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: postgresql://sorvo:sorvo@db:5432
-      BASE_URL: http://localhost:3000
+    build:
+      context: ./web
+    working_dir: /app
     ports:
-      - "3000:3000"
+      - "5173:5173"
     volumes:
-      - .:/rails
+      - ./web:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: sh -lc "npm install && npm run dev -- --host"
     depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
+      - api
 
   sidekiq:
     build: .
+    working_dir: /app
     command: bundle exec sidekiq -e development -q default -q mailers
     environment:
       RAILS_ENV: development
       REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: postgresql://sorvo:sorvo@db:5432
+      DATABASE_URL: postgresql://sorvo:sorvo@db:5432/sorvo_development
+      BUNDLE_PATH: /usr/local/bundle
     volumes:
-      - .:/rails
+      - .:/app
+      - bundle_cache:/usr/local/bundle
     depends_on:
       redis:
         condition: service_healthy
@@ -62,3 +79,4 @@ services:
 
 volumes:
   pgdata:
+  bundle_cache:
