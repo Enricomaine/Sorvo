@@ -127,6 +127,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_120001) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.string "email"
     t.string "username"
     t.string "password_digest"
     t.integer "role"
@@ -135,7 +136,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_120001) do
     t.datetime "updated_at", null: false
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
-    t.string "email", null: false
     t.string "smtp_address"
     t.integer "smtp_port"
     t.string "smtp_user_name"
