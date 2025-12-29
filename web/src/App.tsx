@@ -15,6 +15,12 @@ import CustomerEdit from "./pages/CustomerEdit.tsx";
 import Items from "./pages/Items.tsx";
 import ItemCreate from "./pages/ItemCreate.tsx";
 import ItemEdit from "./pages/ItemEdit.tsx";
+import PriceTables from "./pages/PriceTables.tsx";
+import PriceTableCreate from "./pages/PriceTableCreate.tsx";
+import PriceTableEdit from "./pages/PriceTableEdit.tsx";
+import Sellers from "./pages/Sellers.tsx";
+import SellerCreate from "./pages/SellerCreate.tsx";
+import SellerEdit from "./pages/SellerEdit.tsx";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +41,12 @@ const App = () => (
             <Route path="/itens" element={<Items />} />
             <Route path="/itens/novo" element={<ItemCreate />} />
             <Route path="/itens/:id/editar" element={<ItemEdit />} />
+            <Route path="/tabelas-preco" element={<PriceTables />} />
+            <Route path="/tabelas-preco/nova" element={<PriceTableCreate />} />
+            <Route path="/tabelas-preco/:id/editar" element={<PriceTableEdit />} />
+            <Route path="/vendedores" element={<Sellers />} />
+            <Route path="/vendedores/novo" element={<SellerCreate />} />
+            <Route path="/vendedores/:id/editar" element={<SellerEdit />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
