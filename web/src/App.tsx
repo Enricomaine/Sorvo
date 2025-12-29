@@ -12,6 +12,9 @@ import NotFound from "./pages/NotFound.tsx";
 import Customers from "./pages/Customers.tsx";
 import CustomerCreate from "./pages/CustomerCreate.tsx";
 import CustomerEdit from "./pages/CustomerEdit.tsx";
+import Items from "./pages/Items.tsx";
+import ItemCreate from "./pages/ItemCreate.tsx";
+import ItemEdit from "./pages/ItemEdit.tsx";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +32,9 @@ const App = () => (
             <Route path="/clientes" element={<Customers />} />
             <Route path="/clientes/novo" element={<CustomerCreate />} />
             <Route path="/clientes/:id/editar" element={<CustomerEdit />} />
+            <Route path="/itens" element={<Items />} />
+            <Route path="/itens/novo" element={<ItemCreate />} />
+            <Route path="/itens/:id/editar" element={<ItemEdit />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
