@@ -41,10 +41,7 @@ const Login = () => {
   };
 
   const handleForgotPassword = () => {
-    toast({
-      title: "Email enviado",
-      description: "Verifique sua caixa de entrada para redefinir sua senha.",
-    });
+    navigate(`/esqueci-senha?email=${encodeURIComponent(email)}`, { state: { email } });
   };
 
   return (

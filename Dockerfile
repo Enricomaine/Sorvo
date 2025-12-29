@@ -77,4 +77,4 @@ RUN gem install bundler -v 2.6.9
 ENV BUNDLER_VERSION=2.6.9
 EXPOSE 3000
 
-CMD ["bash", "-lc", "bundle install && if [ -x ./bin/rails ]; then bin/rails s -p 3000 -b 0.0.0.0; elif [ -f config.ru ]; then bundle exec rackup -p 3000 -o 0.0.0.0; else echo 'Erro para iniciar API'; sleep 3600; fi"]
+CMD ["bash", "-lc", "bundle install && bin/rails db:prepare && if [ -x ./bin/rails ]; then bin/rails s -p 3000 -b 0.0.0.0; elif [ -f config.ru ]; then bundle exec rackup -p 3000 -o 0.0.0.0; else echo 'Erro para iniciar API'; sleep 3600; fi"]

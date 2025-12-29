@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Customers from "./pages/Customers.tsx";
 import CustomerCreate from "./pages/CustomerCreate.tsx";
 import CustomerEdit from "./pages/CustomerEdit.tsx";
+import ForgotPassword from "./pages/ForgotPassword.tsx";
 import Items from "./pages/Items.tsx";
 import ItemCreate from "./pages/ItemCreate.tsx";
 import ItemEdit from "./pages/ItemEdit.tsx";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/clientes" element={<Customers />} />
+            <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/clientes/novo" element={<CustomerCreate />} />
             <Route path="/clientes/:id/editar" element={<CustomerEdit />} />
             <Route path="/itens" element={<Items />} />
