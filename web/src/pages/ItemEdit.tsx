@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getProductById, ProductData } from "../data/products";
+import { ImageSelector, SelectedImage } from "@/components/ui/image-selector";
 
 const ItemEdit = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const ItemEdit = () => {
   const [unit, setUnit] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  const [images, setImages] = useState<SelectedImage[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -30,10 +32,16 @@ const ItemEdit = () => {
       setUnit(item.unit);
       setPrice(String(item.price));
       setDescription(item.description);
+  // Prefill images from product images URLs, set first as primary
+  const prefilled = (item.images || []).slice(0, 5).map((url, idx) => ({ id: `${item.id}-${idx}`, url, primary: idx === 0 }));
+  setImages(prefilled);
     }
   }, [item]);
 
   const handleSave = () => {
+    if (images.length === 0 || !images.some((i) => i.primary)) {
+      return;
+    }
     // TODO: integrate with backend
     navigate("/itens");
   };
@@ -66,6 +74,9 @@ const ItemEdit = () => {
               <div className="sm:col-span-2">
                 <Label htmlFor="description">Descrição</Label>
                 <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+              </div>
+              <div className="sm:col-span-2">
+                <ImageSelector value={images} onChange={setImages} max={5} />
               </div>
             </div>
 

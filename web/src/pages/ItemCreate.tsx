@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { ImageSelector, SelectedImage } from "@/components/ui/image-selector";
 
 const ItemCreate = () => {
   const navigate = useNavigate();
@@ -12,8 +13,13 @@ const ItemCreate = () => {
   const [unit, setUnit] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  const [images, setImages] = useState<SelectedImage[]>([]);
 
   const handleSave = () => {
+    if (images.length === 0 || !images.some((i) => i.primary)) {
+      // Minimal validation: require at least one primary image
+      return;
+    }
     // TODO: integrate with backend
     navigate("/itens");
   };
@@ -28,7 +34,7 @@ const ItemCreate = () => {
           <p className="text-muted-foreground mt-1">Preencha os dados do item</p>
         </div>
 
-        <Card className="p-4 sm:p-6">
+  <Card className="p-4 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="name">Nome</Label>
@@ -45,6 +51,9 @@ const ItemCreate = () => {
             <div className="sm:col-span-2">
               <Label htmlFor="description">Descrição</Label>
               <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Detalhes do item" />
+            </div>
+            <div className="sm:col-span-2">
+              <ImageSelector value={images} onChange={setImages} max={5} />
             </div>
           </div>
 
