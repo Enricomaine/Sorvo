@@ -16,11 +16,6 @@ const menuItems = [
     url: "/marketplace",
     icon: ShoppingCart,
   },
-  {
-    title: "Cadastro de Cliente",
-    url: "/clientes/cadastro",
-    icon: UserPlus,
-  },
 ];
 
 interface AppSidebarProps {
