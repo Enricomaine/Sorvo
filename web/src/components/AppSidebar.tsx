@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShoppingCart, LogOut, Menu, X, UserPlus } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, LogOut, Menu, X, Users } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,11 @@ const menuItems = [
     title: "Marketplace",
     url: "/marketplace",
     icon: ShoppingCart,
+  },
+  {
+    title: "Clientes",
+    url: "/clientes",
+    icon: Users,
   },
 ];
 
