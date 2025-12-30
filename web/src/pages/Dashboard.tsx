@@ -171,8 +171,48 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Orders Table */}
-        <div className="card-elevated overflow-hidden">
+        {/* Orders: mobile cards */}
+        <div className="grid grid-cols-1 gap-3 sm:hidden mb-8">
+          {orders.map((order) => {
+            const status = statusConfig[order.status];
+            return (
+              <div key={order.id} className="card-elevated p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pedido</p>
+                    <p className="text-lg font-semibold text-foreground">{order.id}</p>
+                  </div>
+                  <Badge
+                    variant={status.variant}
+                    className={`${
+                      order.status === "completed"
+                        ? "bg-success/10 text-success"
+                        : order.status === "processing"
+                        ? "bg-primary/10 text-primary"
+                        : ""
+                    }`}
+                  >
+                    {status.label}
+                  </Badge>
+                </div>
+                <div className="mt-2 text-sm text-muted-foreground">{order.date}</div>
+                <div className="mt-1 text-sm text-foreground">{order.customer}</div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="font-medium text-foreground">R$ {order.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <Button variant="ghost" size="sm" onClick={() => handleViewOrder(order.id)} className="hover:bg-accent">
+                    <Eye className="h-4 w-4 mr-1" /> Ver
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Orders Table for >= sm */}
+        <div className="card-elevated overflow-hidden hidden sm:block">
           <div className="p-5 border-b">
             <h2 className="text-lg font-semibold text-foreground">
               Pedidos Recentes
