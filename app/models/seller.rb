@@ -10,8 +10,10 @@ class Seller < ApplicationRecord
   enum :person_type, { person: 0, business: 1 }
 
   validates :name, :document, :person_type, presence: true
+  validates :uuid, presence: true, uniqueness: true
 
   before_validation :set_user_role
+  before_validation :ensure_uuid
 
   validate :cpf_must_be_valid, if: -> { person_type == "person" }
   validate :cnpj_must_be_valid, if: -> { person_type == "business" }
@@ -20,6 +22,10 @@ class Seller < ApplicationRecord
 
   def set_user_role
     user&.role = :seller if user.present?
+  end
+
+  def ensure_uuid
+    self.uuid ||= SecureRandom.uuid
   end
 
   def cnpj_must_be_valid
