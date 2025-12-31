@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShoppingCart, LogOut, Menu, X, Users, Package, Table, BadgeDollarSign } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, LogOut, Menu, X, Users, Package, Table, BadgeDollarSign, Receipt } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,11 @@ const menuItems = [
     title: "Vendedores",
     url: "/vendedores",
     icon: BadgeDollarSign,
+  },
+  {
+    title: "Meus pedidos",
+    url: "/meus-pedidos",
+    icon: Receipt,
   },
 ];
 

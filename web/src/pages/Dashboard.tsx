@@ -121,7 +121,7 @@ const Dashboard = () => {
       bgColor: "bg-warning/10",
     },
     {
-      title: "Faturamento Total",
+      title: "Faturamento Mensal",
       value: `R$ ${orders
         .filter((o) => o.status === "completed")
         .reduce((acc, o) => acc + o.total, 0)

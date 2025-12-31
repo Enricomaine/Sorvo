@@ -103,7 +103,14 @@ function OrderView() {
     <AppSidebar>
       <div className="p-3 sm:p-6 lg:p-8 animate-fade-in">
         {/* Header */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Pedido {order.id}</h1>
+            <p className="text-muted-foreground mt-1">Criado em {order.date}</p>
+          </div>
+          <Button variant="outline" onClick={() => navigate(-1)}>Voltar</Button>
+        </div>
+        {/* <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Pedido {order.id}</h1>
             <p className="text-muted-foreground mt-1">Criado em {order.date}</p>
@@ -112,11 +119,11 @@ function OrderView() {
             <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Voltar
             </Button>
-            {/* <Button className="gap-2">
+            <Button className="gap-2">
               <Printer className="h-4 w-4" /> Imprimir
-            </Button> */}
+            </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Status */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
