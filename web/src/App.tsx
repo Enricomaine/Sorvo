@@ -14,6 +14,8 @@ import CustomerCreate from "./pages/CustomerCreate.tsx";
 import CustomerEdit from "./pages/CustomerEdit.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
+import FirstAccess from "./pages/FirstAccess.tsx";
+import OrderView from "./pages/OrderView.tsx";
 import Items from "./pages/Items.tsx";
 import ItemCreate from "./pages/ItemCreate.tsx";
 import ItemEdit from "./pages/ItemEdit.tsx";
@@ -40,6 +42,8 @@ const App = () => (
             <Route path="/clientes" element={<Customers />} />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/recuperar-senha" element={<ResetPassword />} />
+            <Route path="/primeiro-acesso" element={<FirstAccess />} />
+            <Route path="/pedido/:id" element={<OrderView />} />
             <Route path="/clientes/novo" element={<CustomerCreate />} />
             <Route path="/clientes/:id/editar" element={<CustomerEdit />} />
             <Route path="/itens" element={<Items />} />

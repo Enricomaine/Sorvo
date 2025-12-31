@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Eye, Package, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface Order {
   id: string;
@@ -91,12 +92,10 @@ const statusConfig = {
 const Dashboard = () => {
   const [orders] = useState<Order[]>(mockOrders);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleViewOrder = (orderId: string) => {
-    toast({
-      title: "Pedido visualizado",
-      description: `Detalhes do pedido ${orderId} carregados.`,
-    });
+    navigate(`/pedido/${orderId}`);
   };
 
   const stats = [
