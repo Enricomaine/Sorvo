@@ -4,6 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useParams, useNavigate } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { products } from "@/data/products";
 import { Clock, Package, CheckCircle,  } from "lucide-react";
 
 function getMockOrder(id?: string) {
@@ -57,6 +59,7 @@ const StatusIcon = statusOrder.icon
 export default function OrderReadOnly() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const order = getMockOrder(id);
 
   const subtotal = order.items.reduce((acc, it) => acc + it.price * it.quantity, 0);
@@ -166,6 +169,25 @@ export default function OrderReadOnly() {
             </div>
           </div>
         </Card>
+
+        {/* Footer: copy items to cart */}
+        <div className="mt-6">
+          <Button
+            className="w-full"
+            onClick={() => {
+              // Map order items to product entities from mock products for cart
+              order.items.forEach((it) => {
+                const p = products.find((pr) => pr.id === it.id);
+                if (p) {
+                  addToCart(p as any, it.quantity);
+                }
+              });
+              navigate("/marketplace");
+            }}
+          >
+            Copiar pedido
+          </Button>
+        </div>
       </div>
     </AppSidebar>
   );
