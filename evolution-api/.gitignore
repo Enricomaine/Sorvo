@@ -1,0 +1,34 @@
+# Arquivos de ambiente
+.env.local
+.env.production
+
+# Backups
+backup_*.sql
+
+# Logs
+*.log
+logs/
+
+# Dados do banco SQLite (se usado)
+*.db
+*.sqlite
+
+# Node modules (se houver)
+node_modules/
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
