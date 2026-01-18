@@ -12,6 +12,9 @@ class Item < ApplicationRecord
   private
 
   def must_have_main_image
-    errors.add(:main_image, "Must be added") unless main_image.attached?
+  changes = respond_to?(:attachment_changes) ? attachment_changes : {}
+  pending_change = changes[:main_image] || changes['main_image']
+  has_pending = pending_change.present?
+  errors.add(:main_image, "Must be added") unless main_image.attached? || has_pending
   end
 end
