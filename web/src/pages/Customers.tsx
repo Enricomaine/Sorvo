@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,12 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Edit, Filter, Plus, Phone, Mail, IdCard } from "lucide-react";
 import { customers as mockCustomers, Customer } from "../data/customers";
+import { fetchSellers, Seller } from "@/api/sellers";
 import { useNavigate } from "react-router-dom";
 
 const Customers = () => {
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [sellerId, setSellerId] = useState<string>("all");
+  const [sellers, setSellers] = useState<Seller[]>([]);
+  const [sellersError, setSellersError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const filtered = useMemo(() => {
@@ -19,9 +23,27 @@ const Customers = () => {
       const matchesSearch = `${c.name} ${c.document} ${c.email}`.toLowerCase().includes(search.toLowerCase());
       const matchesSegment = segment === "all" || c.segment === segment;
       const matchesStatus = status === "all" || c.status === status;
-      return matchesSearch && matchesSegment && matchesStatus;
+      let matchesSeller = true;
+      if (sellerId !== "all") {
+        const sId = (c as any).sellerId;
+        matchesSeller = sId ? String(sId) === sellerId : true;
+      }
+      return matchesSearch && matchesSegment && matchesStatus && matchesSeller;
     });
-  }, [search, segment, status]);
+  }, [search, segment, status, sellerId]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const list = await fetchSellers();
+        if (mounted) setSellers(list);
+      } catch (e: any) {
+        if (mounted) setSellersError(e.message || "Erro ao carregar vendedores");
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const handleCreate = () => {
     // In a real app, navigate to customer create form
@@ -81,6 +103,17 @@ const Customers = () => {
                   <SelectItem value="inativo">Inativo</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={sellerId} onValueChange={setSellerId}>
+                <SelectTrigger className="w-full sm:w-56">
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos vendedores</SelectItem>
+                  {sellers.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
               <Filter className="h-4 w-4" />
@@ -123,6 +156,9 @@ const Customers = () => {
               </div>
             </Card>
           ))}
+          {sellersError && (
+            <Card className="p-3 text-sm text-red-600">{sellersError}</Card>
+          )}
           {filtered.length === 0 && (
             <Card className="p-6 text-center text-muted-foreground">Nenhum cliente encontrado</Card>
           )}
@@ -176,6 +212,9 @@ const Customers = () => {
               )}
             </tbody>
           </table>
+          {sellersError && (
+            <Card className="mt-3 p-3 text-sm text-red-600">{sellersError}</Card>
+          )}
         </div>
       </div>
     </AppSidebar>
