@@ -42,7 +42,7 @@ gem "dotenv"
 gem "net-smtp"
 
 # Background jobs via Redis
-gem "sidekiq", "~> 7.2"
+gem "sidekiq", "~> 8.1"
 gem "net-protocol"
 
 group :development, :test do
