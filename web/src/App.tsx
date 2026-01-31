@@ -42,27 +42,27 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Login />} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute allowRoles={["admin", "seller"]}><Dashboard /></ProtectedRoute>} />
               <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
-              <Route path="/clientes" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+              <Route path="/clientes" element={<ProtectedRoute allowRoles={["admin", "seller"]}><Customers /></ProtectedRoute>} />
               <Route path="/esqueci-senha" element={<ForgotPassword />} />
               <Route path="/recuperar-senha" element={<ResetPassword />} />
               <Route path="/primeiro-acesso" element={<FirstAccess />} />
-              <Route path="/pedido/:id" element={<ProtectedRoute><OrderView /></ProtectedRoute>} />
+              <Route path="/pedido/:id" element={<ProtectedRoute allowRoles={["admin", "seller"]}><OrderView /></ProtectedRoute>} />
               <Route path="/meus-pedidos" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
               <Route path="/meus-pedidos/:id" element={<ProtectedRoute><OrderReadOnly /></ProtectedRoute>} />
-              <Route path="/clientes/novo" element={<ProtectedRoute><CustomerCreate /></ProtectedRoute>} />
-              <Route path="/clientes/:id/editar" element={<ProtectedRoute><CustomerEdit /></ProtectedRoute>} />
-              <Route path="/itens" element={<ProtectedRoute><Items /></ProtectedRoute>} />
-              <Route path="/itens/novo" element={<ProtectedRoute><ItemCreate /></ProtectedRoute>} />
-              <Route path="/itens/:id/editar" element={<ProtectedRoute><ItemEdit /></ProtectedRoute>} />
-              <Route path="/tabelas-preco" element={<ProtectedRoute><PriceTables /></ProtectedRoute>} />
-              <Route path="/tabelas-preco/nova" element={<ProtectedRoute><PriceTableCreate /></ProtectedRoute>} />
-              <Route path="/tabelas-preco/:id/editar" element={<ProtectedRoute><PriceTableEdit /></ProtectedRoute>} />
-              <Route path="/vendedores" element={<ProtectedRoute><Sellers /></ProtectedRoute>} />
-              <Route path="/vendedores/novo" element={<ProtectedRoute><SellerCreate /></ProtectedRoute>} />
-              <Route path="/vendedores/:id/editar" element={<ProtectedRoute><SellerEdit /></ProtectedRoute>} />
-              <Route path="/product/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
+              <Route path="/clientes/novo" element={<ProtectedRoute allowRoles={["admin", "seller"]}><CustomerCreate /></ProtectedRoute>} />
+              <Route path="/clientes/:id/editar" element={<ProtectedRoute allowRoles={["admin", "seller"]}><CustomerEdit /></ProtectedRoute>} />
+              <Route path="/itens" element={<ProtectedRoute allowRoles={["admin", "seller"]}><Items /></ProtectedRoute>} />
+              <Route path="/itens/novo" element={<ProtectedRoute allowRoles={["admin", "seller"]}><ItemCreate /></ProtectedRoute>} />
+              <Route path="/itens/:id/editar" element={<ProtectedRoute allowRoles={["admin", "seller"]}><ItemEdit /></ProtectedRoute>} />
+              <Route path="/tabelas-preco" element={<ProtectedRoute allowRoles={["admin", "seller"]}><PriceTables /></ProtectedRoute>} />
+              <Route path="/tabelas-preco/nova" element={<ProtectedRoute allowRoles={["admin", "seller"]}><PriceTableCreate /></ProtectedRoute>} />
+              <Route path="/tabelas-preco/:id/editar" element={<ProtectedRoute allowRoles={["admin", "seller"]}><PriceTableEdit /></ProtectedRoute>} />
+              <Route path="/vendedores" element={<ProtectedRoute allowRoles={["admin", "seller"]}><Sellers /></ProtectedRoute>} />
+              <Route path="/vendedores/novo" element={<ProtectedRoute allowRoles={["admin", "seller"]}><SellerCreate /></ProtectedRoute>} />
+              <Route path="/vendedores/:id/editar" element={<ProtectedRoute allowRoles={["admin", "seller"]}><SellerEdit /></ProtectedRoute>} />
+              <Route path="/product/:id" element={<ProtectedRoute allowRoles={["admin", "seller", "customer"]}><ProductDetail /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -35,7 +35,24 @@ const Login = () => {
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao Sorvo.",
       });
-      navigate("/dashboard");
+      // Decode JWT to read role and redirect accordingly
+      try {
+        const payloadBase64 = token.split(".")[1];
+        const payloadJson = JSON.parse(atob(payloadBase64));
+        const role = (payloadJson?.role as string | undefined) ?? "";
+
+        if (role === "admin" || role === "seller") {
+          navigate("/dashboard");
+        } else if (role === "customer") {
+          navigate("/marketplace");
+        } else {
+          // Fallback: unknown role goes to dashboard
+          navigate("/dashboard");
+        }
+      } catch {
+        // If decoding fails, fallback to dashboard
+        navigate("/dashboard");
+      }
     } catch (err: any) {
       toast({
         title: "Falha no login",
