@@ -3,22 +3,37 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { products } from "../data/products";
+import { fetchItems, ItemDTO } from "@/lib/items";
+import { useToast } from "@/hooks/use-toast";
 import { Edit, Filter, Plus } from "lucide-react";
 
 const Items = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
+  const [items, setItems] = useState<ItemDTO[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchItems()
+      .then(setItems)
+      .catch((err) => {
+        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      })
+      .finally(() => setLoading(false));
+  }, [toast]);
   // Using only search for now, based on available ProductData fields
 
   const filtered = useMemo(() => {
-    return products.filter((p) => {
-      const matchesSearch = `${p.name} ${p.description}`.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    return items.filter((p) => {
+      const matchesSearch = `${p.code} ${p.description}`.toLowerCase().includes(q);
       return matchesSearch;
     });
-  }, [search]);
+  }, [search, items]);
 
   const handleCreate = () => navigate("/itens/novo");
   const handleEdit = (id: string) => navigate(`/itens/${id}/editar`);
@@ -55,17 +70,16 @@ const Items = () => {
             <Card key={p.id} className="p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-semibold text-foreground truncate">{p.name}</div>
+                  <div className="font-semibold text-foreground truncate">{p.code}</div>
                   <div className="mt-1 text-xs text-muted-foreground line-clamp-2">{p.description}</div>
                   <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-foreground">{p.unit}</span>
                     <span className="text-xs font-medium text-foreground">
-                      {p.price?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      {p.base_price?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </span>
                   </div>
                 </div>
                 <div className="shrink-0">
-                  <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(p.id)}>
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(String(p.id))}>
                     <Edit className="h-4 w-4" />
                     Editar
                   </Button>
@@ -93,12 +107,12 @@ const Items = () => {
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} className="border-t hover:bg-muted/40">
-                  <td className="py-3 px-4 font-medium text-foreground">{p.name}</td>
+                  <td className="py-3 px-4 font-medium text-foreground">{p.code}</td>
                   <td className="py-3 px-4">{p.description}</td>
-                  <td className="py-3 px-4">{p.unit}</td>
-                  <td className="py-3 px-4">{p.price?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+                  <td className="py-3 px-4"></td>
+                  <td className="py-3 px-4">{p.base_price?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
                   <td className="py-3 px-4 text-right">
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(p.id)}>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(String(p.id))}>
                       <Edit className="h-4 w-4" />
                       Editar
                     </Button>
