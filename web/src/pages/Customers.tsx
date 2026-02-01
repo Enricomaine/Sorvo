@@ -1,27 +1,58 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Edit, Filter, Plus, Phone, Mail, IdCard } from "lucide-react";
-import { customers as mockCustomers, Customer } from "../data/customers";
 import { useNavigate } from "react-router-dom";
+import { fetchCustomers, CustomerDTO } from "@/lib/customers";
+import { useToast } from "@/hooks/use-toast";
 
 const Customers = () => {
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [customers, setCustomers] = useState<CustomerDTO[]>([]);
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+    fetchCustomers()
+      .then((data) => {
+        if (!active) return;
+        setCustomers(data);
+      })
+      .catch((err: any) => {
+        if (!active) return;
+        setError(err?.message || "Falha ao carregar clientes");
+        toast({ title: "Erro", description: err?.message || "Falha ao carregar clientes", variant: "destructive" });
+      })
+      .finally(() => {
+        if (!active) return;
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [toast]);
 
   const filtered = useMemo(() => {
-    return mockCustomers.filter((c) => {
-      const matchesSearch = `${c.name} ${c.document} ${c.email}`.toLowerCase().includes(search.toLowerCase());
-      const matchesSegment = segment === "all" || c.segment === segment;
-      const matchesStatus = status === "all" || c.status === status;
+    return customers.filter((c) => {
+      const email = c.user?.username || "";
+      const matchesSearch = `${c.name} ${c.document || ""} ${email}`.toLowerCase().includes(search.toLowerCase());
+      // Segment not available from backend yet; keep filter as 'all'
+      const matchesSegment = segment === "all";
+      const statusValue = c.active ? "ativo" : "inativo";
+      const matchesStatus = status === "all" || status === statusValue;
       return matchesSearch && matchesSegment && matchesStatus;
     });
-  }, [search, segment, status]);
+  }, [customers, search, segment, status]);
 
   const handleCreate = () => {
     // In a real app, navigate to customer create form
@@ -89,33 +120,37 @@ const Customers = () => {
           </div>
         </Card>
 
+        {loading && <Card className="p-6 text-center">Carregando clientes...</Card>}
+        {error && !loading && <Card className="p-6 text-center text-destructive">{error}</Card>}
+
         {/* List: mobile cards */}
         <div className="grid grid-cols-1 gap-3 sm:hidden">
-          {filtered.map((c) => (
+          {!loading && !error && filtered.map((c) => (
             <Card key={c.id} className="p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="font-semibold text-foreground truncate">{c.name}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><IdCard className="h-3 w-3" />{c.document}</span>
-                    <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" />{c.email}</span>
-                    <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</span>
+                    <span className="inline-flex items-center gap-1"><IdCard className="h-3 w-3" />{c.document || "—"}</span>
+                    <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" />{c.user?.username || "—"}</span>
+                    <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone || "—"}</span>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs capitalize px-2 py-0.5 rounded-full bg-muted text-foreground">{c.segment}</span>
+                    {/* Segment not provided; hide badge or show placeholder */}
+                    {/* <span className="text-xs capitalize px-2 py-0.5 rounded-full bg-muted text-foreground">{c.segment}</span> */}
                     <span
                       className={
-                        c.status === "ativo"
+                        c.active
                           ? "text-xs inline-flex items-center rounded-full bg-green-100 text-green-700 px-2 py-0.5"
                           : "text-xs inline-flex items-center rounded-full bg-zinc-200 text-zinc-700 px-2 py-0.5"
                       }
                     >
-                      {c.status}
+                      {c.active ? "ativo" : "inativo"}
                     </span>
                   </div>
                 </div>
                 <div className="shrink-0">
-                  <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(c.id)} aria-label={`Editar ${c.name}`}>
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(String(c.id))} aria-label={`Editar ${c.name}`}>
                     <Edit className="h-4 w-4" />
                     Editar
                   </Button>
@@ -123,7 +158,7 @@ const Customers = () => {
               </div>
             </Card>
           ))}
-          {filtered.length === 0 && (
+          {!loading && !error && filtered.length === 0 && (
             <Card className="p-6 text-center text-muted-foreground">Nenhum cliente encontrado</Card>
           )}
         </div>
@@ -143,31 +178,31 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c) => (
+              {!loading && !error && filtered.map((c) => (
                 <tr key={c.id} className="border-t hover:bg-muted/40">
                   <td className="py-3 px-4 font-medium text-foreground">{c.name}</td>
                   <td className="py-3 px-4">{c.document}</td>
-                  <td className="py-3 px-4">{c.email}</td>
-                  <td className="py-3 px-4">{c.phone}</td>
-                  <td className="py-3 px-4 capitalize">{c.segment}</td>
+                  <td className="py-3 px-4">{c.user?.username || "—"}</td>
+                  <td className="py-3 px-4">{c.phone || "—"}</td>
+                  <td className="py-3 px-4 capitalize">{/* segment */}</td>
                   <td className="py-3 px-4">
                     <span className={
-                      c.status === "ativo"
+                      c.active
                         ? "inline-flex items-center rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-medium"
                         : "inline-flex items-center rounded-full bg-zinc-200 text-zinc-700 px-2 py-0.5 text-xs font-medium"
                     }>
-                      {c.status}
+                      {c.active ? "ativo" : "inativo"}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(c.id)}>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(String(c.id))}>
                       <Edit className="h-4 w-4" />
                       Editar
                     </Button>
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {!loading && !error && filtered.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-muted-foreground">
                     Nenhum cliente encontrado

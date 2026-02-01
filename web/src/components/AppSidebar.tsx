@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { logout as apiLogout } from "@/lib/api";
+import { logout as apiLogout } from "@/lib/auth";
 
 const menuItems = [
   {

@@ -18,7 +18,7 @@ class CustomersController < ApplicationController
 
   # GET /customers/1
   def show
-    render json: @customer.as_json(include: { user: { only: [ :username ] } })
+    render json: @customer.as_json(include: { user: { only: [ :email ] } })
   end
 
   # POST /customers
