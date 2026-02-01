@@ -5,23 +5,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { createItem } from "@/lib/items";
+import { useToast } from "@/hooks/use-toast";
 import { ImageSelector, SelectedImage } from "@/components/ui/image-selector";
 
 const ItemCreate = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<SelectedImage[]>([]);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    if (images.length === 0 || !images.some((i) => i.primary)) {
-      // Minimal validation: require at least one primary image
+  const handleSave = async () => {
+    const primary = images.find((i) => i.primary);
+    if (!primary) {
+      toast({ title: "Imagem principal", description: "Selecione uma imagem principal.", variant: "destructive" });
       return;
     }
-    // TODO: integrate with backend
-    navigate("/itens");
+    const secondary = images.filter((i) => !i.primary);
+    const code = name.trim(); // Using name as code for now
+    const base_price = Number(String(price).replace(/[^0-9.,]/g, "").replace(".", "").replace(",", "."));
+    if (!code || isNaN(base_price)) {
+      toast({ title: "Campos inválidos", description: "Preencha nome e preço válidos.", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      await createItem({
+        code,
+        description,
+        base_price,
+        active: true,
+        main_image: primary.file,
+        images: secondary.map((s) => s.file),
+      });
+      toast({ title: "Item criado", description: "O item foi cadastrado com sucesso." });
+      navigate("/itens");
+    } catch (err: any) {
+      toast({ title: "Erro ao criar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => navigate("/itens");
@@ -59,7 +86,7 @@ const ItemCreate = () => {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Button variant="outline" className="w-full sm:w-auto" onClick={handleCancel}>Cancelar</Button>
-            <Button className="w-full sm:w-auto" onClick={handleSave}>Salvar</Button>
+            <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving}>Salvar</Button>
           </div>
         </Card>
       </div>
