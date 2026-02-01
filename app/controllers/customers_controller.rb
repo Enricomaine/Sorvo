@@ -11,7 +11,7 @@ class CustomersController < ApplicationController
 
     render json: @customers.as_json(
       include: {
-        user: { only: [ :username ] },
+        user: { only: [ :email ] },
         price_table: { only: [ :description ] }
       })
   end

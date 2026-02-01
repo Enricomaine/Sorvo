@@ -6,19 +6,40 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { createCustomer } from "@/lib/customers";
+import { useToast } from "@/hooks/use-toast";
 
 const CustomerCreate = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [document, setDocument] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [segment, setSegment] = useState("varejo");
+  const [segment, setSegment] = useState("juridica");
   const [status, setStatus] = useState("ativo");
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    // TODO: integrate with backend
-    navigate("/clientes");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const person_type = segment === "juridica" ? "business" : "person";
+      await createCustomer({
+        name,
+        document: document || null,
+        phone: phone || null,
+        person_type,
+        active: status === "ativo",
+  user_attributes: { email, password: password || undefined },
+      });
+      toast({ title: "Cliente criado", description: "O cliente foi cadastrado com sucesso." });
+      navigate("/clientes");
+    } catch (err: any) {
+      toast({ title: "Erro ao criar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => navigate("/clientes");
@@ -46,19 +67,22 @@ const CustomerCreate = () => {
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
             </div>
             <div>
+              <Label htmlFor="password">Senha</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div>
               <Label htmlFor="phone">Telefone</Label>
               <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
             </div>
             <div>
-              <Label>Segmento</Label>
+              <Label>Tipo pessoa</Label>
               <Select value={segment} onValueChange={setSegment}>
                 <SelectTrigger>
                   <SelectValue placeholder="Segmento" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="varejo">Varejo</SelectItem>
-                  <SelectItem value="atacado">Atacado</SelectItem>
-                  <SelectItem value="servicos">Serviços</SelectItem>
+                  <SelectItem value="juridica">Jurídica</SelectItem>
+                  <SelectItem value="fisica">Física</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -78,7 +102,7 @@ const CustomerCreate = () => {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Button variant="outline" className="w-full sm:w-auto" onClick={handleCancel}>Cancelar</Button>
-            <Button className="w-full sm:w-auto" onClick={handleSave}>Salvar</Button>
+            <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving}>Salvar</Button>
           </div>
         </Card>
       </div>

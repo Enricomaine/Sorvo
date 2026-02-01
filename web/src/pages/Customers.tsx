@@ -44,9 +44,9 @@ const Customers = () => {
 
   const filtered = useMemo(() => {
     return customers.filter((c) => {
-      const email = c.user?.username || "";
+      const email = c.user?.email || "";
       const matchesSearch = `${c.name} ${c.document || ""} ${email}`.toLowerCase().includes(search.toLowerCase());
-      // Segment not available from backend yet; keep filter as 'all'
+
       const matchesSegment = segment === "all";
       const statusValue = c.active ? "ativo" : "inativo";
       const matchesStatus = status === "all" || status === statusValue;
@@ -55,12 +55,10 @@ const Customers = () => {
   }, [customers, search, segment, status]);
 
   const handleCreate = () => {
-    // In a real app, navigate to customer create form
     navigate("/clientes/novo");
   };
 
   const handleEdit = (id: string) => {
-    // In a real app, navigate to customer edit form
     navigate(`/clientes/${id}/editar`);
   };
 
@@ -79,7 +77,6 @@ const Customers = () => {
           </Button>
         </div>
 
-        {/* Filters */}
         <Card className="p-3 sm:p-4 mb-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full sm:max-w-md">
@@ -123,7 +120,6 @@ const Customers = () => {
         {loading && <Card className="p-6 text-center">Carregando clientes...</Card>}
         {error && !loading && <Card className="p-6 text-center text-destructive">{error}</Card>}
 
-        {/* List: mobile cards */}
         <div className="grid grid-cols-1 gap-3 sm:hidden">
           {!loading && !error && filtered.map((c) => (
             <Card key={c.id} className="p-3">
@@ -132,12 +128,10 @@ const Customers = () => {
                   <div className="font-semibold text-foreground truncate">{c.name}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><IdCard className="h-3 w-3" />{c.document || "—"}</span>
-                    <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" />{c.user?.username || "—"}</span>
+                    <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" />{c.user?.email || "—"}</span>
                     <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone || "—"}</span>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    {/* Segment not provided; hide badge or show placeholder */}
-                    {/* <span className="text-xs capitalize px-2 py-0.5 rounded-full bg-muted text-foreground">{c.segment}</span> */}
                     <span
                       className={
                         c.active
@@ -163,7 +157,6 @@ const Customers = () => {
           )}
         </div>
 
-        {/* List: table for >= sm */}
         <div className="overflow-x-auto hidden sm:block">
           <table className="w-full text-sm">
             <thead>
@@ -172,7 +165,6 @@ const Customers = () => {
                 <th className="py-3 px-4 font-medium">Documento</th>
                 <th className="py-3 px-4 font-medium">E-mail</th>
                 <th className="py-3 px-4 font-medium">Telefone</th>
-                <th className="py-3 px-4 font-medium">Segmento</th>
                 <th className="py-3 px-4 font-medium">Status</th>
                 <th className="py-3 px-4 font-medium text-right">Ações</th>
               </tr>
@@ -182,9 +174,8 @@ const Customers = () => {
                 <tr key={c.id} className="border-t hover:bg-muted/40">
                   <td className="py-3 px-4 font-medium text-foreground">{c.name}</td>
                   <td className="py-3 px-4">{c.document}</td>
-                  <td className="py-3 px-4">{c.user?.username || "—"}</td>
+                  <td className="py-3 px-4">{c.user?.email || "—"}</td>
                   <td className="py-3 px-4">{c.phone || "—"}</td>
-                  <td className="py-3 px-4 capitalize">{/* segment */}</td>
                   <td className="py-3 px-4">
                     <span className={
                       c.active

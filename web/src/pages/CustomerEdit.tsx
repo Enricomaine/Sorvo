@@ -31,8 +31,9 @@ const CustomerEdit = () => {
   const [name, setName] = useState("");
   const [document, setDocument] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [segment, setSegment] = useState("varejo");
+  const [personType, setPersonType] = useState("juridica");
   const [status, setStatus] = useState("ativo");
 
   useEffect(() => {
@@ -41,8 +42,7 @@ const CustomerEdit = () => {
       setDocument(customer.document || "");
       setEmail(customer.user?.email || "");
       setPhone(customer.phone || "");
-      // Map backend fields if available. person_type -> segment mapping assumption.
-      setSegment(customer.person_type === "business" ? "atacado" : "varejo");
+      setPersonType(customer.person_type === "business" ? "juridica" : "fisica");
       setStatus(customer.active ? "ativo" : "inativo");
     }
   }, [customer]);
@@ -51,14 +51,14 @@ const CustomerEdit = () => {
     if (!id) return;
     setSaving(true);
     try {
-      const person_type = segment === "atacado" ? "business" : "person";
+      const person_type = personType === "juridica" ? "business" : "person";
       await updateCustomer(id, {
         name,
         document: document || null,
         phone: phone || null,
         person_type,
         active: status === "ativo",
-        user_attributes: { email },
+        user_attributes: { email, password: password || undefined },
       });
       toast({ title: "Cliente salvo", description: "As alterações foram aplicadas." });
       navigate("/clientes");
@@ -97,19 +97,22 @@ const CustomerEdit = () => {
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div>
+                <Label htmlFor="password">Senha</Label>
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <div>
                 <Label htmlFor="phone">Telefone</Label>
                 <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
               <div>
-                <Label>Segmento</Label>
-                <Select value={segment} onValueChange={setSegment}>
+                <Label>Tipo pessoa</Label>
+                <Select value={personType} onValueChange={setPersonType}>
                   <SelectTrigger>
                     <SelectValue placeholder="Segmento" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="varejo">Varejo</SelectItem>
-                    <SelectItem value="atacado">Atacado</SelectItem>
-                    <SelectItem value="servicos">Serviços</SelectItem>
+                    <SelectItem value="juridica">Jurídica</SelectItem>
+                    <SelectItem value="fisica">Física</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -80,3 +80,24 @@ export async function updateCustomer(id: string | number, payload: UpdateCustome
   }
   return (await res.json()) as CustomerDTO;
 }
+
+export async function createCustomer(payload: UpdateCustomerPayload): Promise<CustomerDTO> {
+  const token = getToken();
+  const res = await fetch(`/api/v1/customers`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ customer: payload }),
+  });
+  if (!res.ok) {
+    let message = "Falha ao criar cliente";
+    try {
+      const data = await res.json();
+      message = data.error || message;
+    } catch {}
+    throw new Error(message);
+  }
+  return (await res.json()) as CustomerDTO;
+}
