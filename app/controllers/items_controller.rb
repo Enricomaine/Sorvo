@@ -1,9 +1,9 @@
 class ItemsController < ApplicationController
   include Rails.application.routes.url_helpers
-  before_action :set_item, only: %i[ show update destroy remove_image ]
+  before_action :set_item, only: %i[ show update destroy remove_image set_main_image ]
 
   before_action -> { require_role(:customer, :seller) }, only: %i[ show index ]
-  before_action -> { require_role(:seller) }, only: %i[ create update destroy remove_image ]
+  before_action -> { require_role(:seller) }, only: %i[ create update destroy remove_image set_main_image ]
 
   # GET /items
   def index
@@ -58,8 +58,20 @@ class ItemsController < ApplicationController
 
       main_image_param = params.dig(:item, :main_image)
       if main_image_param.present?
-        @item.main_image.purge if @item.main_image.attached?
+        # keep previous main as secondary image
+        if @item.main_image.attached?
+          old_blob = @item.main_image.blob
+          unless old_blob.nil?
+            already_attached = @item.images.attachments.any? { |att| att.blob_id == old_blob.id }
+            @item.images.attach(old_blob) unless already_attached
+          end
+          @item.main_image.purge
+        end
+        # replace main image with the uploaded file
         @item.main_image.attach(main_image_param)
+      elsif params.dig(:item, :main_image).is_a?(String) && params.dig(:item, :main_image) == ""
+        # explicit clear main image if client sends empty string
+        @item.main_image.purge if @item.main_image.attached?
       end
 
       if @item.update(item_params)
@@ -81,6 +93,29 @@ class ItemsController < ApplicationController
   def remove_image
     image = @item.images.find(params[:image_id])
     image.purge
+
+    render json: item_with_images(@item)
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "image not found" }, status: :not_found
+  end
+
+  # PATCH /items/:id/main_image/:image_id
+  def set_main_image
+    image = @item.images.find(params[:image_id])
+
+    ActiveRecord::Base.transaction do
+      # demote current main to secondary (if different from the new one)
+      if @item.main_image.attached?
+        old_blob = @item.main_image.blob
+        if old_blob && old_blob.id != image.blob.id
+          already_attached = @item.images.attachments.any? { |att| att.blob_id == old_blob.id }
+          @item.images.attach(old_blob) unless already_attached
+        end
+        @item.main_image.purge
+      end
+      # set new main image from existing secondary
+      @item.main_image.attach(image.blob)
+    end
 
     render json: item_with_images(@item)
   rescue ActiveRecord::RecordNotFound
@@ -115,10 +150,10 @@ class ItemsController < ApplicationController
   end
 
   def item_with_images(item)
-    images = item.images.attached? ? item.images.map { |img| { id: img.id, url: url_for(img) } } : []
-    main_image_url = item.main_image.attached? ? url_for(item.main_image) : nil
+  images = item.images.attached? ? item.images.map { |img| { id: img.id, url: url_for(img) } } : []
+  main_image_url = item.main_image.attached? ? url_for(item.main_image) : nil
 
-    images = images.reject { |img| img[:url] == main_image_url }
+  images = images.reject { |img| img[:url] == main_image_url }
 
     item.as_json.merge(
       main_image: {

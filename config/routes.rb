@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       post "password/reset", to: "password#reset"
 
       delete "/items/:id/images/:image_id", to: "items#remove_image"
+  patch "/items/:id/main_image/:image_id", to: "items#set_main_image"
 
       # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

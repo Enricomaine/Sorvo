@@ -21,10 +21,6 @@ const ItemCreate = () => {
 
   const handleSave = async () => {
     const primary = images.find((i) => i.primary);
-    if (!primary) {
-      toast({ title: "Imagem principal", description: "Selecione uma imagem principal.", variant: "destructive" });
-      return;
-    }
     const secondary = images.filter((i) => !i.primary);
     const code = name.trim(); // Using name as code for now
     const base_price = Number(String(price).replace(/[^0-9.,]/g, "").replace(".", "").replace(",", "."));
@@ -39,8 +35,8 @@ const ItemCreate = () => {
         description,
         base_price,
         active: true,
-        main_image: primary.file,
-        images: secondary.map((s) => s.file),
+        ...(primary?.file ? { main_image: primary.file } : {}),
+        images: secondary.map((s) => s.file).filter(Boolean),
       });
       toast({ title: "Item criado", description: "O item foi cadastrado com sucesso." });
       navigate("/itens");

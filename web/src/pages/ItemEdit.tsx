@@ -4,46 +4,103 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { getProductById, ProductData } from "../data/products";
+import { useEffect, useMemo, useState } from "react";
+import { fetchItem, removeItemImage, setItemMainImage, updateItem } from "@/lib/items";
 import { ImageSelector, SelectedImage } from "@/components/ui/image-selector";
+import { useToast } from "@/hooks/use-toast";
 
 const ItemEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [item, setItem] = useState<ProductData | null>(null);
-
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<SelectedImage[]>([]);
+  const [initialImageIds, setInitialImageIds] = useState<string[]>([]);
+  const [mainImageFromServer, setMainImageFromServer] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
-      const found = getProductById(id);
-      setItem(found || null);
-    }
-  }, [id]);
+    if (!id) return;
+    setLoading(true);
+    fetchItem(id)
+      .then((data) => {
+        setName(data.code || "");
+        setDescription(data.description || "");
+        setUnit("");
+        setPrice(data.base_price != null ? String(data.base_price) : "");
+        setMainImageFromServer(data.main_image?.url || null);
+        const remoteImgs: SelectedImage[] = [
+          ...(data.main_image?.url
+            ? [{ id: "main", url: data.main_image.url, primary: true } as SelectedImage]
+            : []),
+          ...data.images.map((img) => ({ id: String(img.id), url: img.url })),
+        ];
+        // ensure only one marked primary (main image)
+        const normalized = remoteImgs.map((img, idx) => ({ ...img, primary: idx === 0 }));
+        setImages(normalized);
+        setInitialImageIds(remoteImgs.map((i) => i.id));
+      })
+      .catch((err: any) => {
+        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      })
+      .finally(() => setLoading(false));
+  }, [id, toast]);
 
-  useEffect(() => {
-    if (item) {
-      setName(item.name);
-      setUnit(item.unit);
-      setPrice(String(item.price));
-      setDescription(item.description);
-  // Prefill images from product images URLs, set first as primary
-  const prefilled = (item.images || []).slice(0, 5).map((url, idx) => ({ id: `${item.id}-${idx}`, url, primary: idx === 0 }));
-  setImages(prefilled);
-    }
-  }, [item]);
-
-  const handleSave = () => {
-    if (images.length === 0 || !images.some((i) => i.primary)) {
+  const handleSave = async () => {
+    if (!id) return;
+  const primary = images.find((i) => i.primary);
+  if (!primary && images.length > 0) {
+      toast({ title: "Imagem principal", description: "Selecione uma imagem principal.", variant: "destructive" });
       return;
     }
-    // TODO: integrate with backend
-    navigate("/itens");
+    const base_price = Number(String(price).replace(/[^0-9.,]/g, "").replace(".", "").replace(",", "."));
+    if (!name.trim() || isNaN(base_price)) {
+      toast({ title: "Campos inválidos", description: "Preencha nome e preço válidos.", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const currentIds = images.filter((i) => !i.file).map((i) => i.id);
+      const removedIds = initialImageIds.filter((rid) => !currentIds.includes(rid));
+      const removedMain = removedIds.includes("main");
+      for (const rid of removedIds) {
+        if (rid !== "main") {
+          await removeItemImage(id, rid);
+        }
+      }
+
+      const newMainFile = primary?.file;
+      // If user removed old main, we should purge it rather than demote
+      if (!removedMain && primary && !newMainFile && primary.id !== "main") {
+        await setItemMainImage(id, primary.id);
+      }
+      const additionalFiles = images
+        .filter((i) => i.file && (!primary || i.id !== primary.id))
+        .map((i) => i.file!)
+
+      await updateItem(id, {
+        code: name.trim(),
+        description,
+        base_price,
+        active: true,
+        ...(images.length === 0 || removedMain
+          ? { main_image: "" }
+          : newMainFile
+            ? { main_image: newMainFile }
+            : {}),
+        images: additionalFiles,
+      });
+      toast({ title: "Item atualizado", description: "As alterações foram salvas." });
+      navigate("/itens");
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => navigate("/itens");
@@ -56,7 +113,7 @@ const ItemEdit = () => {
           <p className="text-muted-foreground mt-1">Atualize os dados do item</p>
         </div>
 
-        {item ? (
+    {!loading ? (
           <Card className="p-4 sm:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -81,12 +138,12 @@ const ItemEdit = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <Button variant="outline" className="w-full sm:w-auto" onClick={handleCancel}>Cancelar</Button>
-              <Button className="w-full sm:w-auto" onClick={handleSave}>Salvar</Button>
+        <Button variant="outline" className="w-full sm:w-auto" onClick={handleCancel}>Cancelar</Button>
+        <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving}>Salvar</Button>
             </div>
           </Card>
         ) : (
-          <Card className="p-6 text-center text-muted-foreground">Item não encontrado</Card>
+      <Card className="p-6 text-center text-muted-foreground">Carregando...</Card>
         )}
       </div>
     </AppSidebar>
