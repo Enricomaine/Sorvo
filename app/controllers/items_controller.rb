@@ -28,7 +28,20 @@ class ItemsController < ApplicationController
 
   # GET /items/1
   def show
-    render json: item_with_images(@item)
+    json = item_with_images(@item)
+
+    if get_customer_id.present?
+      prices_map = ItemPriceService.new(
+        customer_id: get_customer_id,
+        seller_id: get_seller_id
+      ).prices_for([ @item.id ])
+      price_row = prices_map[@item.id]
+      json = json.merge(price: price_row.present? ? price_row["price"] : @item.base_price)
+    else
+      json = json.merge(price: @item.base_price)
+    end
+
+    render json: json
   end
 
   # POST /items

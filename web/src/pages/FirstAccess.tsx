@@ -1,30 +1,50 @@
-import { useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { resetPassword } from "@/lib/auth";
 
 export default function FirstAccess() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
   const emailFromState = (location.state as any)?.email || new URLSearchParams(location.search).get("email") || "";
+  const queryToken = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("token") || "";
+  }, [location.search]);
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [email] = useState(emailFromState);
+  const [token, setToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setToken(queryToken);
+  }, [queryToken]);
 
   const valid = password.length >= 8 && password === confirm;
 
   const onSubmit = async () => {
+    if (!valid) return;
+    if (!token) {
+      toast({ title: "Token inválido", description: "O link/token de primeiro acesso é inválido ou ausente.", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 600));
-    toast({ title: "Senha definida", description: "Sua senha foi criada com sucesso." });
-    navigate("/dashboard");
+    try {
+      await resetPassword(token, password);
+      toast({ title: "Senha definida", description: "Sua senha foi criada com sucesso." });
+      navigate("/");
+    } catch (err: any) {
+      toast({ title: "Erro ao definir senha", description: err?.message || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -54,6 +74,11 @@ export default function FirstAccess() {
           <div className="text-xs text-muted-foreground">
             A senha deve ter pelo menos 8 caracteres.
           </div>
+          {!token && (
+            <div className="text-xs text-destructive">
+              Link sem token. Acesse via o link de e-mail de primeiro acesso.
+            </div>
+          )}
 
           <Button className="w-full" disabled={!valid || submitting} onClick={onSubmit}>
             {submitting ? "Salvando..." : "Definir senha"}

@@ -6,98 +6,67 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useParams, useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Printer, Clock, Package, CheckCircle,  } from "lucide-react";
-
-type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
-
-interface OrderItem {
-  id: string;
-  name: string;
-  unit: string;
-  quantity: number;
-  price: number;
-}
-
-interface OrderData {
-  id: string;
-  date: string;
-  status: OrderStatus;
-  customer: {
-    name: string;
-    document: string;
-    email: string;
-    phone: string;
-  };
-  items: OrderItem[];
-}
+import { Clock, CheckCircle } from "lucide-react";
+import { fetchOrder, updateOrder, OrderDetailDTO, OrderStatus } from "@/lib/orders";
 
 const statusConfig = {
   pending: {
     label: "Pendente",
-    variant: "secondary" as const,
     icon: Clock,
     color: "bg-warning/10 text-warning",
   },
-  processing: {
-    label: "Processando",
-    variant: "default" as const,
-    icon: Package,
-    color: "bg-primary/10 text-primary",
-  },
-  completed: {
-    label: "Concluído",
-    variant: "default" as const,
+  delivered: {
+    label: "Entregue",
     icon: CheckCircle,
     color: "bg-success/10 text-success",
   },
   cancelled: {
     label: "Cancelado",
-    variant: "destructive" as const,
     icon: Clock,
     color: "bg-destructive/10 text-destructive",
   },
 };
 
-function getMockOrder(id?: string): OrderData {
-  return {
-    id: id || "12345",
-    date: "31/12/2025",
-    status: "pending",
-    customer: {
-      name: "Acme Ltda",
-      document: "12.345.678/0001-99",
-      email: "compras@acme.com",
-      phone: "(11) 99999-0000",
-    },
-    items: [
-      { id: "p1", name: "Produto A", unit: "un", quantity: 2, price: 35.5 },
-      { id: "p2", name: "Produto B", unit: "cx", quantity: 1, price: 120 },
-      { id: "p3", name: "Produto C", unit: "kg", quantity: 3, price: 19.9 },
-    ]
-  };
-}
-
 function OrderView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [order, setOrder] = useState<OrderDetailDTO | null>(null);
+  const [status, setStatus] = useState<OrderStatus>("pending");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const order = useMemo(() => getMockOrder(id), [id]);
-  const [status, setStatus] = useState<OrderStatus>(order.status);
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    fetchOrder(id)
+      .then((data) => {
+        setOrder(data);
+        setStatus(data.status);
+      })
+      .catch((err) => {
+        toast({ title: "Erro", description: err?.message || "Falha ao carregar pedido", variant: "destructive" });
+      })
+      .finally(() => setLoading(false));
+  }, [id, toast]);
 
-  const subtotal = order.items.reduce((acc, it) => acc + it.price * it.quantity, 0);
-  const freight = 0;
-  const [discountInput, setDiscountInput] = useState<string>("");
+  const subtotal = useMemo(() => {
+    if (!order) return 0;
+    return order.order_items.reduce((acc, it) => acc + Number(it.unit_price || 0) * Number(it.quantity || 0), 0);
+  }, [order]);
+
+  const discountInputDefault = "";
+  const [discountInput, setDiscountInput] = useState<string>(discountInputDefault);
   const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
   const normalizedDiscount = discountInput.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
   const parsedDiscount = normalizedDiscount.length ? Number(normalizedDiscount) : 0;
   const discountValue = discountType === "percent" ? subtotal * (parsedDiscount / 100) : parsedDiscount;
-  const total = Math.max(0, subtotal + freight - discountValue);
+  const total = Math.max(0, subtotal - discountValue);
 
-  const statusOrder = statusConfig[order.status]
-  const StatusIcon = statusOrder.icon
+  const statusOrder = statusConfig[status];
+  const StatusIcon = statusOrder.icon;
 
   return (
     <AppSidebar>
@@ -105,8 +74,8 @@ function OrderView() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Pedido {order.id}</h1>
-            <p className="text-muted-foreground mt-1">Criado em {order.date}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">Pedido {order?.id}</h1>
+            <p className="text-muted-foreground mt-1">{order ? `Criado em ${new Date(order.created_at).toLocaleDateString("pt-BR")}` : ""}</p>
           </div>
           <Button variant="outline" onClick={() => navigate(-1)}>Voltar</Button>
         </div>
@@ -126,51 +95,49 @@ function OrderView() {
         </div> */}
 
         {/* Status */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <Badge className={`${statusOrder.color} text-base px-4 py-2`}>
-            <StatusIcon className="h-4 w-4 mr-2" />
-            {statusOrder.label}
-          </Badge>
-        </div>
+        {loading && <Card className="p-6 text-center">Carregando...</Card>}
+        {!loading && order && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <Badge className={`${statusOrder.color} text-base px-4 py-2`}>
+              <StatusIcon className="h-4 w-4 mr-2" />
+              {statusOrder.label}
+            </Badge>
+          </div>
+        )}
 
         {/* Customer */}
+        {order && (
         <Card className="p-4 mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-3">Cliente</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-muted-foreground">Nome</p>
-              <p className="text-foreground font-medium">{order.customer.name}</p>
+              <p className="text-foreground font-medium">{order.customer?.trade_name || "—"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Documento</p>
-              <p className="text-foreground font-medium">{order.customer.document}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">E-mail</p>
-              <p className="text-foreground font-medium">{order.customer.email}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Telefone</p>
-              <p className="text-foreground font-medium">{order.customer.phone}</p>
+              <p className="text-muted-foreground">Código</p>
+              <p className="text-foreground font-medium">{order.customer_id}</p>
             </div>
           </div>
         </Card>
+        )}
 
         {/* Items group */}
+        {order && (
         <Card className="p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Itens do pedido</h2>
-            <Badge variant="secondary">{order.items.length} itens</Badge>
+            <Badge variant="secondary">{order.order_items.length} itens</Badge>
           </div>
           {/* Mobile: cards */}
           <div className="grid grid-cols-1 gap-3 sm:hidden">
-            {order.items.map((it) => (
+            {order.order_items.map((it) => (
               <Card key={it.id} className="p-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Item</p>
-                    <p className="text-foreground font-semibold">{it.name}</p>
-                    <p className="text-xs text-muted-foreground">{it.unit}</p>
+                    <p className="text-foreground font-semibold">{it.item?.description}</p>
+                    <p className="text-xs text-muted-foreground">{it.item?.code}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">Qtd</p>
@@ -179,11 +146,11 @@ function OrderView() {
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Preço</span>
-                  <span className="text-foreground">{it.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                  <span className="text-foreground">{Number(it.unit_price || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="text-foreground">{(it.price * it.quantity).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                  <span className="text-foreground">{(Number(it.unit_price || 0) * Number(it.quantity || 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                 </div>
               </Card>
             ))}
@@ -195,28 +162,28 @@ function OrderView() {
               <TableHeader>
                 <TableRow className="table-header">
                   <TableHead className="py-4">Item</TableHead>
-                  <TableHead className="py-4">Unidade</TableHead>
                   <TableHead className="py-4 text-center">Quantidade</TableHead>
                   <TableHead className="py-4">Preço</TableHead>
                   <TableHead className="py-4">Subtotal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {order.items.map((it) => (
+                {order.order_items.map((it) => (
                   <TableRow key={it.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium text-foreground py-4">{it.name}</TableCell>
-                    <TableCell className="text-muted-foreground py-4">{it.unit}</TableCell>
+                    <TableCell className="font-medium text-foreground py-4">{it.item?.description}</TableCell>
                     <TableCell className="text-center py-4">{it.quantity}</TableCell>
-                    <TableCell className="py-4">{it.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
-                    <TableCell className="py-4">{(it.price * it.quantity).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
+                    <TableCell className="py-4">{Number(it.unit_price || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
+                    <TableCell className="py-4">{(Number(it.unit_price || 0) * Number(it.quantity || 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
         </Card>
+        )}
 
         {/* Totals */}
+        {order && (
         <Card className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -275,27 +242,40 @@ function OrderView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="processing">Processando</SelectItem>
-                  <SelectItem value="completed">Concluído</SelectItem>
+                  <SelectItem value="delivered">Entregue</SelectItem>
                   <SelectItem value="cancelled">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
           </div>
           </div>
         </Card>
+        )}
 
         {/* Footer actions */}
-        <div className="mt-6">
-          <Button
-            className="gap-2 w-full"
-            onClick={() => {
-              toast({ title: "Pedido salvo", description: "As alterações foram salvas com sucesso." });
-              navigate("/dashboard");
-            }}
-          >
-            Salvar
-          </Button>
-        </div>
+        {order && (
+          <div className="mt-6">
+            <Button
+              className="gap-2 w-full"
+              disabled={saving}
+              onClick={async () => {
+                if (!id) return;
+                setSaving(true);
+                try {
+                  const updated = await updateOrder(id, { status });
+                  setOrder(updated);
+                  toast({ title: "Pedido salvo", description: "As alterações foram salvas com sucesso." });
+                  navigate("/dashboard");
+                } catch (err: any) {
+                  toast({ title: "Erro ao salvar", description: err?.message || "Falha ao salvar pedido", variant: "destructive" });
+                } finally {
+                  setSaving(false);
+                }
+              }}
+            >
+              Salvar
+            </Button>
+          </div>
+        )}
       </div>
     </AppSidebar>
   );

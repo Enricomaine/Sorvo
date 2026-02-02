@@ -8,6 +8,7 @@ export interface ItemDTO {
   base_price?: number | null;
   active: boolean;
   main_image_url?: string | null;
+  price?: number | null;
 }
 
 export interface ItemImageDTO {
@@ -18,6 +19,7 @@ export interface ItemImageDTO {
 export interface ItemDetails extends ItemDTO {
   main_image: { url: string | null };
   images: ItemImageDTO[];
+  price?: number | null;
 }
 
 export async function fetchItems(): Promise<ItemDTO[]> {

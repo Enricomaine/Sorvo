@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useMemo, useState } from "react";
+import { forgotPassword } from "@/lib/auth";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -22,13 +23,26 @@ const ForgotPassword = () => {
     setEmail(stateEmail || queryEmail);
   }, [location.state, queryEmail]);
 
-  const handleSubmit = () => {
-    // TODO: call backend to send reset email
-    toast({
-      title: "Email enviado",
-      description: "Verifique sua caixa de entrada para redefinir sua senha.",
-    });
-    // navigate("/");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!email) {
+      toast({ title: "E-mail obrigatório", description: "Informe seu e-mail.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      await forgotPassword(email);
+      toast({
+        title: "Email enviado",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      navigate("/recuperar-senha", { state: { token: "" } });
+    } catch (err: any) {
+      toast({ title: "Falha ao enviar", description: err?.message || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,7 +61,7 @@ const ForgotPassword = () => {
               placeholder="email@exemplo.com"
             />
           </div>
-          <Button className="w-full" onClick={handleSubmit}>Enviar</Button>
+          <Button className="w-full" onClick={handleSubmit} disabled={loading}>{loading ? "Enviando..." : "Enviar"}</Button>
         </div>
       </Card>
     </div>
