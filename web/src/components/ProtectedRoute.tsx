@@ -26,7 +26,6 @@ export default function ProtectedRoute({ children, allowRoles }: ProtectedRouteP
     }
   }, [token]);
 
-  // If a token exists in localStorage but context hasn't updated yet, avoid immediate redirect
   const tokenInStorage = typeof window !== "undefined" ? localStorage.getItem("sorvo_token") : null;
 
   if (!isAuthenticated && !tokenInStorage) {
@@ -43,7 +42,6 @@ export default function ProtectedRoute({ children, allowRoles }: ProtectedRouteP
       description: "Você não tem permissão para acessar esta página.",
       variant: "destructive",
     });
-    // If a customer tries to access admin/seller pages, send to marketplace; otherwise fallback to dashboard
     return (
       <Navigate
         to={role === "customer" ? "/marketplace" : "/dashboard"}

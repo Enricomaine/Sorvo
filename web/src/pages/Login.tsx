@@ -35,22 +35,20 @@ const Login = () => {
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao Sorvo.",
       });
-      // Decode JWT to read role and redirect accordingly
+
       try {
         const payloadBase64 = token.split(".")[1];
         const payloadJson = JSON.parse(atob(payloadBase64));
         const role = (payloadJson?.role as string | undefined) ?? "";
 
-        if (role === "admin" || role === "seller") {
+        if (role === "seller") {
           navigate("/dashboard");
         } else if (role === "customer") {
           navigate("/marketplace");
-        } else {
-          // Fallback: unknown role goes to dashboard
-          navigate("/dashboard");
+        } else if (role === "admin") {
+          navigate("/vendedores");
         }
       } catch {
-        // If decoding fails, fallback to dashboard
         navigate("/dashboard");
       }
     } catch (err: any) {
@@ -82,7 +80,8 @@ const Login = () => {
             Sorvo
           </h1>
           <p className="text-xl text-primary-foreground/80">
-            Gerenciamento de pedidos B2B simplificado para seu negócio
+            "A melhor maneira de prever o futuro é criá-lo.”
+            — Peter Drucker
           </p>
         </div>
       </div>

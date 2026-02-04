@@ -2,7 +2,6 @@ class ItemsController < ApplicationController
   include Rails.application.routes.url_helpers
   before_action :set_item, only: %i[ show update destroy remove_image set_main_image ]
 
-  before_action -> { require_role(:customer, :seller) }, only: %i[ show index ]
   before_action -> { require_role(:seller) }, only: %i[ create update destroy remove_image set_main_image ]
 
   # GET /items

@@ -71,10 +71,13 @@ export function AppSidebar({ children }: AppSidebarProps) {
 
   const visibleMenuItems = useMemo(() => {
     if (role === "customer") {
-      return menuItems.filter((it) => ["/marketplace", "/meus-pedidos"].includes(it.url));
+      return menuItems.filter(it => ["/marketplace", "/meus-pedidos"].includes(it.url));
     }
     if (role === "seller") {
       return menuItems.filter(it => !["/vendedores"].includes(it.url))
+    }
+    if (role === "admin") {
+      return menuItems.filter(it => ["/vendedores"].includes(it.url))
     }
     return menuItems;
   }, [role]);
