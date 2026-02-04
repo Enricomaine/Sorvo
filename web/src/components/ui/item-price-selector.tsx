@@ -1,16 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "./card";
 import { Input } from "./input";
 import { Label } from "./label";
 import { Button } from "./button";
-import { products, ProductData } from "@/data/products";
 import { X, Plus } from "lucide-react";
+import { fetchItems, ItemDTO } from "@/lib/items";
+import { useToast } from "@/hooks/use-toast";
 
 export interface TableItemPrice {
   id: string; // product id
   name: string;
   unit: string;
-  basePrice: number;
+  basePrice?: number; // may be undefined when loaded from API
   price: number; // overridden price in table
 }
 
@@ -20,27 +21,39 @@ interface ItemPriceSelectorProps {
 }
 
 export function ItemPriceSelector({ value, onChange }: ItemPriceSelectorProps) {
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string>("");
+  const [items, setItems] = useState<ItemDTO[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchItems()
+      .then(setItems)
+      .catch((err) => toast({ title: "Erro ao buscar itens", description: err.message, variant: "destructive" }))
+      .finally(() => setLoading(false));
+  }, [toast]);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    return products.filter((p) => `${p.name} ${p.description}`.toLowerCase().includes(q));
-  }, [query]);
+    return items.filter((p) => `${p.code} ${p.description}`.toLowerCase().includes(q));
+  }, [query, items]);
 
   const alreadySelected = new Set(value.map((v) => v.id));
   const addSelected = () => {
     if (!selectedId) return;
     if (alreadySelected.has(selectedId)) return;
-    const prod = products.find((p) => p.id === selectedId);
-    if (!prod) return;
-    const item: TableItemPrice = {
-      id: prod.id,
-      name: prod.name,
-      unit: prod.unit,
-      basePrice: prod.price,
-      price: prod.price,
+    const item = items.find((p) => String(p.id) === selectedId);
+    if (!item) return;
+    const newItem: TableItemPrice = {
+      id: String(item.id),
+      name: item.code,
+      unit: "",
+      basePrice: item.base_price ?? undefined,
+      price: item.base_price ?? 0,
     };
-    onChange([...value, item]);
+    onChange([...value, newItem]);
     setSelectedId("");
   };
 
@@ -68,9 +81,9 @@ export function ItemPriceSelector({ value, onChange }: ItemPriceSelectorProps) {
           className="h-10 rounded-md border bg-background px-3 text-sm"
         >
           <option value="">Selecione um item</option>
-          {filtered.filter((p) => !alreadySelected.has(p.id)).map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
+          {filtered.filter((p) => !alreadySelected.has(String(p.id))).map((p) => (
+            <option key={p.id} value={String(p.id)}>
+              {p.code} — {p.description}
             </option>
           ))}
         </select>
@@ -87,7 +100,7 @@ export function ItemPriceSelector({ value, onChange }: ItemPriceSelectorProps) {
                 <div className="min-w-0">
                   <div className="font-medium text-foreground truncate">{v.name}</div>
                   <div className="text-xs text-muted-foreground mt-1">Unidade: {v.unit}</div>
-                  <div className="text-xs text-muted-foreground">Preço base: {v.basePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+                  <div className="text-xs text-muted-foreground">Preço base: {typeof v.basePrice === "number" ? v.basePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "-"}</div>
                 </div>
                 <button className="text-muted-foreground" onClick={() => removeItem(v.id)} aria-label="Remover">
                   <X className="h-4 w-4" />

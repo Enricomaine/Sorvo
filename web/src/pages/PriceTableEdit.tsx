@@ -6,13 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { priceTables, PriceTable } from "../data/priceTables";
+import { fetchPriceTable, updatePriceTable, PriceTableDTO } from "@/lib/priceTables";
 import { ItemPriceSelector, TableItemPrice } from "@/components/ui/item-price-selector";
+import { useToast } from "@/hooks/use-toast";
 
 const PriceTableEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [table, setTable] = useState<PriceTable | null>(null);
+  const { toast } = useToast();
+  const [table, setTable] = useState<PriceTableDTO | null>(null);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -20,21 +22,57 @@ const PriceTableEdit = () => {
   const [tableItems, setTableItems] = useState<TableItemPrice[]>([]);
 
   useEffect(() => {
-    const found = priceTables.find((t) => t.id === id);
-    setTable(found || null);
-  }, [id]);
+    if (!id) return;
+    fetchPriceTable(id)
+      .then(setTable)
+      .catch((err) => toast({ title: "Erro", description: err.message, variant: "destructive" }));
+  }, [id, toast]);
 
   useEffect(() => {
     if (table) {
-      setName(table.name);
+      setName(table.observation || "");
       setDescription(table.description || "");
       setStatus(table.active ? "active" : "inactive");
+      setTableItems(
+        (table.price_table_items || []).map((pti) => ({
+          id: String(pti.item_id),
+          name: pti.item ? `${pti.item.code} — ${pti.item.description}` : pti.item_id?.toString() || "",
+          unit: "",
+          basePrice: (pti.item?.base_price ?? pti.base_price) ?? undefined,
+          price: (pti.final_price ?? pti.item?.base_price ?? pti.base_price) ?? 0,
+        }))
+      );
     }
   }, [table]);
 
-  const handleSave = () => {
-    // TODO: validate and send tableItems
-    navigate("/tabelas-preco");
+  const handleSave = async () => {
+    if (!id) return;
+    if (!description.trim()) {
+      toast({ title: "Descrição obrigatória", description: "Informe a descrição da tabela.", variant: "destructive" });
+      return;
+    }
+    if (tableItems.length === 0) {
+      toast({ title: "Itens obrigatórios", description: "Adicione ao menos um item.", variant: "destructive" });
+      return;
+    }
+    try {
+      await updatePriceTable(id, {
+        description: description.trim(),
+        observation: name || null,
+        active: status === "active",
+        price_table_items_attributes: tableItems
+          .filter((ti) => ti.id && !isNaN(Number(ti.id)))
+          .map((ti) => ({
+            item_id: Number(ti.id),
+            base_price: ti.basePrice ?? null,
+            final_price: ti.price ?? null,
+          })),
+      });
+      toast({ title: "Tabela atualizada", description: "Alterações salvas." });
+      navigate("/tabelas-preco");
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    }
   };
 
   const handleCancel = () => navigate("/tabelas-preco");
