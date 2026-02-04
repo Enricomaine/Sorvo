@@ -16,7 +16,15 @@ class PriceTablesController < ApplicationController
       return render json: { error: "Unavailable price table" }, status: :forbidden
     end
 
-    render json: @price_table.as_json(include: :price_table_items)
+    render json: @price_table.as_json(
+      include: {
+        price_table_items: {
+          include: {
+            item: { only: [ :id, :code, :description, :base_price ] }
+          }
+        }
+      }
+    )
   end
 
   # POST /price_tables
@@ -31,7 +39,11 @@ class PriceTablesController < ApplicationController
       return render json: { error: "Price tables must have at least one item" }, status: :unprocessable_entity
     end
 
-    item_ids = items_attrs.map { |item| item[:item_id] }
+    item_ids = items_attrs.map { |item| item[:item_id] || item["item_id"] }.compact
+    if item_ids.blank?
+      return render json: { error: "Price tables must have at least one item" }, status: :unprocessable_entity
+    end
+
     valid_item_ids = Item.where(id: item_ids, seller_id: get_seller_id).pluck(:id)
     invalid_items = item_ids - valid_item_ids
 
@@ -56,10 +68,35 @@ class PriceTablesController < ApplicationController
       return render json: { error: "Unavailable price table" }, status: :forbidden
     end
 
-    if @price_table.update(price_table_params)
-      render json: @price_table.as_json(include: :price_table_items)
+    items_attrs = price_table_params[:price_table_items_attributes]
+
+    # Treat empty array as intent to replace (supports deletions)
+    if !items_attrs.nil?
+      item_ids = items_attrs.map { |item| item[:item_id] || item["item_id"] }.compact
+      valid_item_ids = Item.where(id: item_ids, seller_id: get_seller_id).pluck(:id)
+      invalid_items = item_ids - valid_item_ids
+
+      if invalid_items.any?
+        return render json: { error: "Invalid items: #{invalid_items.join(', ')}" }, status: :forbidden
+      end
+
+      ActiveRecord::Base.transaction do
+        # Replace existing items to avoid duplicates
+        @price_table.price_table_items.destroy_all
+
+        if @price_table.update(price_table_params)
+          render json: @price_table.as_json(include: :price_table_items)
+        else
+          render json: @price_table.errors, status: :unprocessable_entity
+          raise ActiveRecord::Rollback
+        end
+      end
     else
-      render json: @price_table.errors, status: :unprocessable_entity
+      if @price_table.update(price_table_params)
+        render json: @price_table.as_json(include: :price_table_items)
+      else
+        render json: @price_table.errors, status: :unprocessable_entity
+      end
     end
   end
 
@@ -82,12 +119,15 @@ class PriceTablesController < ApplicationController
       price_table: [
         :description,
         :observation,
+        :active,
         price_table_items_attributes: [
           [
+            :id,
             :item_id,
             :base_price,
             :percentage,
-            :final_price
+            :final_price,
+            :_destroy
           ]
         ]
       ]

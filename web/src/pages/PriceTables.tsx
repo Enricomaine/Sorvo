@@ -3,23 +3,35 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { priceTables, PriceTable } from "../data/priceTables";
+import { fetchPriceTables, PriceTableDTO } from "@/lib/priceTables";
 import { Edit, Filter, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const PriceTables = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
+  const [tables, setTables] = useState<PriceTableDTO[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchPriceTables()
+      .then(setTables)
+      .catch((err) => toast({ title: "Erro", description: err.message, variant: "destructive" }))
+      .finally(() => setLoading(false));
+  }, [toast]);
 
   const filtered = useMemo(() => {
-    return priceTables.filter((t) => {
-      const matchesSearch = `${t.name} ${t.description || ""}`.toLowerCase().includes(search.toLowerCase());
+    return tables.filter((t) => {
+      const matchesSearch = `${t.description} ${t.observation || ""}`.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = status === "all" || (status === "active" ? t.active : !t.active);
       return matchesSearch && matchesStatus;
     });
-  }, [search, status]);
+  }, [search, status, tables]);
 
   const handleCreate = () => navigate("/tabelas-preco/nova");
   const handleEdit = (id: string) => navigate(`/tabelas-preco/${id}/editar`);
@@ -72,12 +84,12 @@ const PriceTables = () => {
             <Card key={t.id} className="p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-semibold text-foreground truncate">{t.name}</div>
-                  {t.description && (
-                    <div className="mt-1 text-xs text-muted-foreground line-clamp-2">{t.description}</div>
+                  <div className="font-semibold text-foreground truncate">{t.description}</div>
+                  {t.observation && (
+                    <div className="mt-1 text-xs text-muted-foreground line-clamp-2">{t.observation}</div>
                   )}
                   <div className="mt-2 flex items-center gap-2 text-xs">
-                    <span className="px-2 py-0.5 rounded-full bg-muted text-foreground">{t.itemsCount} itens</span>
+                    <span className="px-2 py-0.5 rounded-full bg-muted text-foreground">{(t.price_table_items || []).length} itens</span>
                     <span
                       className={
                         t.active
@@ -90,7 +102,7 @@ const PriceTables = () => {
                   </div>
                 </div>
                 <div className="shrink-0">
-                  <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(t.id)}>
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(String(t.id))}>
                     <Edit className="h-4 w-4" />
                     Editar
                   </Button>
@@ -119,9 +131,9 @@ const PriceTables = () => {
             <tbody>
               {filtered.map((t) => (
                 <tr key={t.id} className="border-t hover:bg-muted/40">
-                  <td className="py-3 px-4 font-medium text-foreground">{t.name}</td>
-                  <td className="py-3 px-4">{t.description || "-"}</td>
-                  <td className="py-3 px-4">{t.itemsCount}</td>
+                  <td className="py-3 px-4 font-medium text-foreground">{t.description}</td>
+                  <td className="py-3 px-4">{t.observation || "-"}</td>
+                  <td className="py-3 px-4">{(t.price_table_items || []).length}</td>
                   <td className="py-3 px-4">
                     <span className={
                       t.active
@@ -131,9 +143,9 @@ const PriceTables = () => {
                       {t.active ? "Ativa" : "Inativa"}
                     </span>
                   </td>
-                  <td className="py-3 px-4">{new Date(t.createdAt).toLocaleDateString("pt-BR")}</td>
+                  <td className="py-3 px-4">{new Date(t.created_at).toLocaleDateString("pt-BR")}</td>
                   <td className="py-3 px-4 text-right">
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(t.id)}>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => handleEdit(String(t.id))}>
                       <Edit className="h-4 w-4" />
                       Editar
                     </Button>

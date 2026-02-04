@@ -7,17 +7,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { ItemPriceSelector, TableItemPrice } from "@/components/ui/item-price-selector";
+import { createPriceTable } from "@/lib/priceTables";
+import { useToast } from "@/hooks/use-toast";
 
 const PriceTableCreate = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("active");
   const [tableItems, setTableItems] = useState<TableItemPrice[]>([]);
 
-  const handleSave = () => {
-    // TODO: validate and send tableItems
-    navigate("/tabelas-preco");
+  const handleSave = async () => {
+    if (!description.trim()) {
+      toast({ title: "Descrição obrigatória", description: "Informe a descrição da tabela.", variant: "destructive" });
+      return;
+    }
+    if (tableItems.length === 0) {
+      toast({ title: "Itens obrigatórios", description: "Adicione ao menos um item.", variant: "destructive" });
+      return;
+    }
+    try {
+      await createPriceTable({
+        description: description.trim(),
+        observation: name || null,
+        active: status === "active",
+        price_table_items_attributes: tableItems
+          .filter((ti) => ti.id && !isNaN(Number(ti.id)))
+          .map((ti) => ({
+            item_id: Number(ti.id),
+            base_price: ti.basePrice ?? null,
+            final_price: ti.price ?? null,
+          })),
+      });
+      toast({ title: "Tabela criada", description: "A tabela foi cadastrada." });
+      navigate("/tabelas-preco");
+    } catch (err: any) {
+      toast({ title: "Erro ao criar", description: err.message, variant: "destructive" });
+    }
   };
 
   const handleCancel = () => navigate("/tabelas-preco");
