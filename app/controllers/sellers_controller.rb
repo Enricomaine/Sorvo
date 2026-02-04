@@ -5,12 +5,12 @@ class SellersController < ApplicationController
   # GET /sellers
   def index
     @sellers = Seller.includes(:user).all
-    render json: @sellers.as_json(include: { user: { only: [ :username ] } })
+    render json: @sellers.as_json(include: { user: { only: [ :email ] } })
   end
 
   # GET /sellers/1
   def show
-    render json: @seller.as_json(include: { user: { only: [ :username ] } })
+    render json: @seller.as_json(include: { user: { only: [ :email ] } })
   end
 
   # POST /sellers
@@ -36,7 +36,7 @@ class SellersController < ApplicationController
     end
 
     if @seller.update(seller_params)
-      render json: @seller.as_json(include: { user: { only: [ :username ] } })
+      render json: @seller.as_json(include: { user: { only: [ :email ] } })
     else
       render json: @seller.errors, status: :unprocessable_entity
     end

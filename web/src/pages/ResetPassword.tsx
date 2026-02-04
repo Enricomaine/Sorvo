@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { resetPassword } from "@/lib/auth";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -24,7 +25,9 @@ const ResetPassword = () => {
     setToken(stateToken || queryToken);
   }, [location.state, queryToken]);
 
-  const handleSubmit = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
     if (!password || !confirm) {
       toast({ title: "Campos obrigatórios", description: "Informe e confirme a nova senha.", variant: "destructive" });
       return;
@@ -33,9 +36,20 @@ const ResetPassword = () => {
       toast({ title: "Senhas diferentes", description: "As senhas informadas não conferem.", variant: "destructive" });
       return;
     }
-    // TODO: call backend to reset password with token
-    toast({ title: "Senha redefinida", description: "Você já pode entrar com sua nova senha." });
-    navigate("/");
+    if (!token) {
+      toast({ title: "Token inválido", description: "O link/token de recuperação é inválido ou ausente.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      await resetPassword(token, password);
+      toast({ title: "Senha redefinida", description: "Você já pode entrar com sua nova senha." });
+      navigate("/");
+    } catch (err: any) {
+      toast({ title: "Erro ao redefinir", description: err?.message || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,7 +76,7 @@ const ResetPassword = () => {
               onChange={(e) => setConfirm(e.target.value)}
             />
           </div>
-          <Button className="w-full" onClick={handleSubmit}>Redefinir senha</Button>
+          <Button className="w-full" onClick={handleSubmit} disabled={loading}>{loading ? "Redefinindo..." : "Redefinir senha"}</Button>
         </div>
       </Card>
     </div>

@@ -6,18 +6,40 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { createSeller } from "@/lib/sellers";
+import { useToast } from "@/hooks/use-toast";
 
 const SellerCreate = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [document, setDocument] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [region, setRegion] = useState("");
+  const [personType, setPersonType] = useState("juridica");
   const [status, setStatus] = useState("ativo");
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    navigate("/vendedores");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const person_type = personType === "juridica" ? "business" : "person";
+      await createSeller({
+        name,
+        document: document || null,
+        phone: phone || null,
+        person_type,
+        active: status === "ativo",
+        user_attributes: { email, password: password || undefined },
+      });
+      toast({ title: "Vendedor criado", description: "O vendedor foi cadastrado com sucesso." });
+      navigate("/vendedores");
+    } catch (err: any) {
+      toast({ title: "Erro ao criar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => navigate("/vendedores");
@@ -49,8 +71,16 @@ const SellerCreate = () => {
               <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
             </div>
             <div>
-              <Label htmlFor="region">Região</Label>
-              <Input id="region" value={region} onChange={(e) => setRegion(e.target.value)} placeholder="Ex: SP - Capital" />
+              <Label>Tipo pessoa</Label>
+              <Select value={personType} onValueChange={setPersonType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Segmento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="juridica">Jurídica</SelectItem>
+                  <SelectItem value="fisica">Física</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Status</Label>
@@ -64,11 +94,15 @@ const SellerCreate = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label htmlFor="password">Senha</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+            </div>
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Button variant="outline" className="w-full sm:w-auto" onClick={handleCancel}>Cancelar</Button>
-            <Button className="w-full sm:w-auto" onClick={handleSave}>Salvar</Button>
+            <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving}>Salvar</Button>
           </div>
         </Card>
       </div>

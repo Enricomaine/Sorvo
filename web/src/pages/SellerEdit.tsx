@@ -6,38 +6,67 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { sellers, SellerData } from "../data/sellers";
+import { fetchSeller, updateSeller, SellerDTO } from "@/lib/sellers";
+import { useToast } from "@/hooks/use-toast";
 
 const SellerEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [seller, setSeller] = useState<SellerData | null>(null);
+  const { toast } = useToast();
+  const [seller, setSeller] = useState<SellerDTO | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
   const [document, setDocument] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [region, setRegion] = useState("");
+  const [personType, setPersonType] = useState("juridica");
   const [status, setStatus] = useState("ativo");
 
   useEffect(() => {
-    const found = sellers.find((s) => s.id === id);
-    setSeller(found || null);
-  }, [id]);
+    if (!id) return;
+    setLoading(true);
+    fetchSeller(id)
+      .then((data) => setSeller(data))
+      .catch((err) => {
+        toast({ title: "Erro", description: err.message, variant: "destructive" });
+      })
+      .finally(() => setLoading(false));
+  }, [id, toast]);
 
   useEffect(() => {
     if (seller) {
-      setName(seller.name);
-      setDocument(seller.document);
-      setEmail(seller.email);
-      setPhone(seller.phone);
-      setRegion(seller.region);
-      setStatus(seller.status);
+      setName(seller.name || "");
+      setDocument(seller.document || "");
+      setEmail(seller.user?.email || "");
+      setPhone(seller.phone || "");
+      setPersonType(seller.person_type === "business" ? "juridica" : "fisica");
+      setStatus(seller.active ? "ativo" : "inativo");
     }
   }, [seller]);
 
-  const handleSave = () => {
-    navigate("/vendedores");
+  const handleSave = async () => {
+    if (!id) return;
+    setSaving(true);
+    try {
+      const person_type = personType === "juridica" ? "business" : "person";
+      await updateSeller(id, {
+        name,
+        document: document || null,
+        phone: phone || null,
+        person_type,
+        active: status === "ativo",
+        user_attributes: { email, password: password || undefined },
+      });
+      toast({ title: "Vendedor salvo", description: "As alterações foram aplicadas." });
+      navigate("/vendedores");
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => navigate("/vendedores");
@@ -50,7 +79,9 @@ const SellerEdit = () => {
           <p className="text-muted-foreground mt-1">Atualize os dados do vendedor</p>
         </div>
 
-        {seller ? (
+        {loading ? (
+          <Card className="p-6 text-center text-muted-foreground">Carregando...</Card>
+        ) : seller ? (
           <Card className="p-4 sm:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -66,12 +97,24 @@ const SellerEdit = () => {
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div>
+                <Label htmlFor="password">Senha</Label>
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <div>
                 <Label htmlFor="phone">Telefone</Label>
                 <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="region">Região</Label>
-                <Input id="region" value={region} onChange={(e) => setRegion(e.target.value)} />
+                <Label>Tipo pessoa</Label>
+                <Select value={personType} onValueChange={setPersonType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Segmento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="juridica">Jurídica</SelectItem>
+                    <SelectItem value="fisica">Física</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Status</Label>
@@ -89,7 +132,7 @@ const SellerEdit = () => {
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <Button variant="outline" className="w-full sm:w-auto" onClick={handleCancel}>Cancelar</Button>
-              <Button className="w-full sm:w-auto" onClick={handleSave}>Salvar</Button>
+              <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving}>Salvar</Button>
             </div>
           </Card>
         ) : (

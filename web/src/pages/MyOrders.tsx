@@ -2,24 +2,41 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-interface OrderListItem {
-  id: string;
-  customer: string;
-  date: string;
-  total: number;
-  status: "pending" | "processing" | "completed" | "cancelled";
-}
-
-const mockOrders: OrderListItem[] = [
-  { id: "12345", customer: "Acme Ltda", date: "31/12/2025", total: 355.4, status: "completed" },
-  { id: "12346", customer: "Beta Ind.", date: "30/12/2025", total: 210.0, status: "processing" },
-  { id: "12347", customer: "Gamma SA", date: "29/12/2025", total: 99.9, status: "pending" },
-];
+import { fetchOrders, OrderListDTO } from "@/lib/orders";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MyOrders() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [orders, setOrders] = useState<OrderListDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+    fetchOrders()
+      .then((data) => { if (active) setOrders(data); })
+      .catch((err) => {
+        if (!active) return;
+        const msg = err?.message || "Falha ao carregar pedidos";
+        setError(msg);
+        toast({ title: "Erro", description: msg, variant: "destructive" });
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [toast]);
+
+  const formatted = useMemo(() => orders.map((o) => ({
+    id: String(o.id),
+    customer: o.customer?.trade_name || "—",
+    date: new Date(o.created_at).toLocaleDateString("pt-BR"),
+    total: o.total_value || 0,
+    status: o.status,
+  })), [orders]);
 
   return (
     <AppSidebar>
@@ -28,9 +45,12 @@ export default function MyOrders() {
           <h1 className="text-2xl sm:text-3xl font-bold">Meus pedidos</h1>
         </div>
 
+        {loading && <Card className="p-6 text-center">Carregando pedidos...</Card>}
+        {error && !loading && <Card className="p-6 text-center text-destructive">{error}</Card>}
+
         {/* Mobile cards */}
         <div className="grid grid-cols-1 gap-3 sm:hidden">
-          {mockOrders.map((o) => (
+          {!loading && !error && formatted.map((o) => (
             <Card key={o.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -46,6 +66,9 @@ export default function MyOrders() {
               </div>
             </Card>
           ))}
+          {!loading && !error && formatted.length === 0 && (
+            <Card className="p-6 text-center text-muted-foreground">Nenhum pedido encontrado</Card>
+          )}
         </div>
 
         {/* Desktop table */}
@@ -61,7 +84,7 @@ export default function MyOrders() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockOrders.map((o) => (
+              {!loading && !error && formatted.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell>#{o.id}</TableCell>
                   <TableCell>{o.customer}</TableCell>
@@ -72,6 +95,11 @@ export default function MyOrders() {
                   </TableCell>
                 </TableRow>
               ))}
+              {!loading && !error && formatted.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum pedido encontrado</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

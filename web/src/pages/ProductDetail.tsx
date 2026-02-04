@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { CartSheet } from "@/components/CartSheet";
 import { useCart } from "@/contexts/CartContext";
-import { getProductById } from "@/data/products";
+import { fetchItem, ItemDetails } from "@/lib/items";
 import {
   Carousel,
   CarouselContent,
@@ -13,37 +13,59 @@ import {
   CarouselNext,
 } from "@/components/ui/carousel";
 import { ArrowLeft, Minus, Plus, ShoppingCart } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart, cart, updateQuantity, removeItem, clearCart, cartItems } = useCart();
+  const { addToCart, updateQuantity, removeItem, clearCart, cartItems } = useCart();
+  const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
+  const [item, setItem] = useState<ItemDetails | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const productData = getProductById(id || "");
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    fetchItem(id)
+      .then(setItem)
+      .catch((err) => {
+        const msg = err?.message || "Falha ao carregar produto";
+        setError(msg);
+        toast({ title: "Erro", description: msg, variant: "destructive" });
+      })
+      .finally(() => setLoading(false));
+  }, [id, toast]);
 
-  if (!productData) {
-    return (
-      <AppSidebar>
-        <div className="p-8 text-center">
-          <h1 className="text-2xl font-bold text-foreground">Produto não encontrado</h1>
-          <Button onClick={() => navigate("/marketplace")} className="mt-4">
-            Voltar ao Marketplace
-          </Button>
-        </div>
-      </AppSidebar>
-    );
-  }
+  const images = useMemo(() => {
+    if (!item) return [] as string[];
+    const urls: string[] = [];
+    if (item.main_image?.url) urls.push(item.main_image.url);
+    if (item.images?.length) urls.push(...item.images.map((i) => i.url));
+    return urls;
+  }, [item]);
 
-  const product = {
-    id: productData.id,
-    name: productData.name,
-    price: productData.price,
-    image: productData.images[0],
-    unit: productData.unit,
-  };
+  const priceValue = useMemo(() => {
+    if (!item) return 0;
+    // backend show includes `price` for customers; fallback to base_price
+    return (item as any).price ?? item.base_price ?? 0;
+  }, [item]);
+
+  const product = useMemo(() => {
+    if (!item) return null;
+    return {
+      id: String(item.id),
+      name: item.description,
+      price: Number(priceValue || 0),
+      image: images[0] || "",
+      unit: "un",
+    };
+  }, [item, priceValue, images]);
 
   const handleAddToCart = () => {
+    if (!product) return;
     addToCart(product, quantity);
     navigate("/marketplace");
   };
@@ -64,17 +86,25 @@ const ProductDetail = () => {
           Voltar ao Marketplace
         </Button>
 
+        {loading && (
+          <div className="p-8 text-center">Carregando produto...</div>
+        )}
+        {error && !loading && (
+          <div className="p-8 text-center text-destructive">{error}</div>
+        )}
+
+        {!loading && !error && item && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Carousel */}
           <div className="w-full">
             <Carousel className="w-full">
               <CarouselContent>
-                {productData.images.map((image, index) => (
+                {images.map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="aspect-square overflow-hidden rounded-xl bg-muted">
                       <img
                         src={image}
-                        alt={`${productData.name} - Imagem ${index + 1}`}
+                        alt={`${item.description} - Imagem ${index + 1}`}
                         className="h-full w-full object-cover"
                       />
                     </div>
@@ -87,7 +117,7 @@ const ProductDetail = () => {
 
             {/* Thumbnail Indicators */}
             <div className="flex justify-center gap-2 mt-4">
-              {productData.images.map((image, index) => (
+              {images.map((image, index) => (
                 <div
                   key={index}
                   className="w-16 h-16 rounded-lg overflow-hidden border-2 border-muted hover:border-primary transition-colors cursor-pointer"
@@ -105,30 +135,22 @@ const ProductDetail = () => {
           {/* Product Info */}
           <div className="flex flex-col">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-              {productData.name}
+              {item.description}
             </h1>
-            <p className="text-muted-foreground mb-4">{productData.unit}</p>
+            <p className="text-muted-foreground mb-4">Código: {item.code}</p>
             
             <p className="text-3xl font-bold text-primary mb-6">
-              R$ {productData.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              R$ {Number(priceValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </p>
 
             <p className="text-foreground/80 mb-6 text-lg leading-relaxed">
-              {productData.description}
+              {item.observation || ""}
             </p>
 
-            {/* Details */}
-            <div className="mb-8">
+            {/* Details (opcional) */}
+            {/* <div className="mb-8">
               <h3 className="font-semibold text-foreground mb-3 text-lg">Detalhes do Produto</h3>
-              <ul className="space-y-2">
-                {productData.details.map((detail, index) => (
-                  <li key={index} className="flex items-center text-muted-foreground">
-                    <span className="w-2 h-2 rounded-full bg-primary mr-3"></span>
-                    {detail}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            </div> */}
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4 mb-6">
@@ -155,12 +177,13 @@ const ProductDetail = () => {
             </div>
 
             {/* Add to Cart Button */}
-            <Button onClick={handleAddToCart} size="lg" className="w-full sm:w-auto text-lg h-14">
+            <Button onClick={handleAddToCart} size="lg" className="w-full sm:w-auto text-lg h-14" disabled={!product}>
               <ShoppingCart className="h-5 w-5 mr-2" />
               Adicionar ao Carrinho
             </Button>
           </div>
         </div>
+        )}
 
         {/* Cart Sheet */}
         <CartSheet
