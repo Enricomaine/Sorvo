@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { createSeller } from "@/lib/sellers";
 import { useToast } from "@/hooks/use-toast";
+import { onlyDigits, maskByPersonType, maxDigitsByPersonType } from "@/lib/utils";
 import { ActiveToggle } from "@/components/ActiveToggle";
 
 const SellerCreate = () => {
@@ -18,7 +19,7 @@ const SellerCreate = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [personType, setPersonType] = useState("juridica");
+  const [personType, setPersonType] = useState<"juridica" | "fisica">("juridica");
   const [active, setActive] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
 
@@ -54,26 +55,10 @@ const SellerCreate = () => {
         </div>
 
         <Card className="p-4 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="name">Nome</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
-            </div>
-            <div>
-              <Label htmlFor="document">Documento</Label>
-              <Input id="document" value={document} onChange={(e) => setDocument(e.target.value)} placeholder="CPF/CNPJ" />
-            </div>
-            <div>
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
-            </div>
-            <div>
-              <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <Label>Tipo pessoa</Label>
-              <Select value={personType} onValueChange={setPersonType}>
+                <Select value={personType} onValueChange={(v) => setPersonType(v as "juridica" | "fisica")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Segmento" />
                 </SelectTrigger>
@@ -83,11 +68,40 @@ const SellerCreate = () => {
                 </SelectContent>
               </Select>
             </div>
-            <ActiveToggle checked={active} onChange={setActive} />
+            <div>
+              <Label htmlFor="document">{personType === "juridica" ? "CNPJ" : "CPF"}</Label>
+              <Input 
+                id="document"
+                value={maskByPersonType(document, personType)}
+                onChange={(e) => {
+                  const raw = onlyDigits(e.target.value)
+                  setDocument(raw.slice(0, maxDigitsByPersonType(personType)));
+                }}
+                inputMode="numeric"
+                placeholder={personType === "juridica" ? "00.000.000/0000-00" : "000.000.000-00"}
+              />
+            </div>
+            <div>
+              <Label htmlFor="name">Nome</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="email">E-mail</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
+            </div>
+            <div>
+              <Label htmlFor="phone">Telefone</Label>
+              <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <div>
               <Label htmlFor="password">Senha</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
             </div>
+            <ActiveToggle checked={active} onChange={setActive} />
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">

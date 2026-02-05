@@ -6,5 +6,6 @@ class Item < ApplicationRecord
   has_one :main_image_attachment, -> { where(name: "main_image") }, class_name: "ActiveStorage::Attachment"
   has_one_attached :main_image
 
-  validates :code, :description, presence: true
+  validates :code, :description, :base_price, presence: true
+  validates :base_price, numericality: { greater_than: 0 }
 end

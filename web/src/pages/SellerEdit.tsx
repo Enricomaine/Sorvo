@@ -86,7 +86,7 @@ const SellerEdit = () => {
           <Card className="p-6 text-center text-muted-foreground">Carregando...</Card>
         ) : seller ? (
           <Card className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <Label>Tipo pessoa</Label>
                 <Select value={personType} onValueChange={(value) => setPersonType(value as "juridica" | "fisica")}>
@@ -116,17 +116,23 @@ const SellerEdit = () => {
                 <Label htmlFor="name">Nome</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="email">E-mail</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="password">Senha</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              </div>
-              <div>
                 <Label htmlFor="phone">Telefone</Label>
                 <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              <div>
+                <Label htmlFor="password">Senha</Label>
+                <Input id="password" type="password" placeholder="Deixe em branco para não alterar" value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <ActiveToggle checked={active} onChange={setActive} />
             </div>

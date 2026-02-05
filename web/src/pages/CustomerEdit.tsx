@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { fetchCustomer, updateCustomer, CustomerDTO } from "@/lib/customers";
+import { fetchPriceTables, PriceTableDTO } from "@/lib/priceTables";
 import { useToast } from "@/hooks/use-toast";
 import { onlyDigits, maskByPersonType, maxDigitsByPersonType } from "@/lib/utils";
 import { ActiveToggle } from "@/components/ActiveToggle";
@@ -30,6 +31,12 @@ const CustomerEdit = () => {
       .finally(() => setLoading(false));
   }, [id, toast]);
 
+  useEffect(() => {
+    fetchPriceTables()
+      .then(setPriceTables)
+      .catch(() => setPriceTables([]));
+  }, []);
+
   const [name, setName] = useState("");
   const [document, setDocument] = useState("");
   const [email, setEmail] = useState("");
@@ -37,6 +44,8 @@ const CustomerEdit = () => {
   const [phone, setPhone] = useState("");
   const [personType, setPersonType] = useState<"juridica" | "fisica">("juridica");
   const [active, setActive] = useState<boolean>(true);
+  const [priceTables, setPriceTables] = useState<PriceTableDTO[]>([]);
+  const [priceTableId, setPriceTableId] = useState<string | null>(null);
 
   useEffect(() => {
     if (customer) {
@@ -60,6 +69,7 @@ const CustomerEdit = () => {
         phone: phone || null,
         person_type,
         active: active,
+        price_table_id: priceTableId ? Number(priceTableId) : null,
         user_attributes: { email, password: password || undefined },
       });
       toast({ title: "Cliente salvo", description: "As alterações foram aplicadas." });
@@ -85,10 +95,18 @@ const CustomerEdit = () => {
           <Card className="p-6 text-center text-muted-foreground">Carregando...</Card>
         ) : customer ? (
           <Card className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="name">Nome</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                <Label>Tipo pessoa</Label>
+                <Select value={personType} onValueChange={(value) => setPersonType(value as "juridica" | "fisica")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Segmento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="juridica">Jurídica</SelectItem>
+                    <SelectItem value="fisica">Física</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="document">{personType === "juridica" ? "CNPJ" : "CPF"}</Label>
@@ -104,26 +122,43 @@ const CustomerEdit = () => {
                 />
               </div>
               <div>
+                <Label htmlFor="name">Nome</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
                 <Label htmlFor="email">E-mail</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="password">Senha</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <div>
                 <Label htmlFor="phone">Telefone</Label>
                 <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
               <div>
-                <Label>Tipo pessoa</Label>
-                <Select value={personType} onValueChange={(value) => setPersonType(value as "juridica" | "fisica")}>
+                <Label htmlFor="password">Senha</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="Não preencha para manter a mesma"
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} />
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              <div>
+                <Label>Tabela de preço</Label>
+                <Select value={priceTableId ?? "__none__"} onValueChange={(v) => setPriceTableId(v === "__none__" ? null : v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Segmento" />
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="juridica">Jurídica</SelectItem>
-                    <SelectItem value="fisica">Física</SelectItem>
+                    <SelectItem value="__none__">Sem tabela de preço</SelectItem>
+                    {priceTables.map((pt) => (
+                      <SelectItem key={pt.id} value={String(pt.id)}>
+                        {pt.description}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

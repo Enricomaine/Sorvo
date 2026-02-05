@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit, Filter, Plus, Phone, Mail, IdCard } from "lucide-react";
 import { fetchSellers, SellerDTO } from "@/lib/sellers";
+import { maskByPersonType, onlyDigits } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const Sellers = () => {
@@ -108,7 +109,7 @@ const Sellers = () => {
                 <div className="min-w-0">
                   <div className="font-semibold text-foreground truncate">{s.name}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><IdCard className="h-3 w-3" />{s.document || "—"}</span>
+                    <span className="inline-flex items-center gap-1"><IdCard className="h-3 w-3"/>{maskByPersonType(onlyDigits(s.document || ""), s.person_type === "business" ? "juridica" : "fisica") || "—"}</span>
                     <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" />{s.user?.email || "—"}</span>
                     <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{s.phone || "—"}</span>
                   </div>
@@ -155,7 +156,7 @@ const Sellers = () => {
               {!loading && !error && filtered.map((s) => (
                 <tr key={s.id} className="border-t hover:bg-muted/40">
                   <td className="py-3 px-4 font-medium text-foreground">{s.name}</td>
-                  <td className="py-3 px-4">{s.document || "—"}</td>
+                  <td className="py-3 px-4">{maskByPersonType(onlyDigits(s.document || ""), s.person_type === "business" ? "juridica" : "fisica") || "—"}</td>
                   <td className="py-3 px-4">{s.user?.email || "—"}</td>
                   <td className="py-3 px-4">{s.phone || "—"}</td>
                   <td className="py-3 px-4">

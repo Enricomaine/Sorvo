@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createCustomer } from "@/lib/customers";
+import { fetchPriceTables, PriceTableDTO } from "@/lib/priceTables";
 import { useToast } from "@/hooks/use-toast";
 import { onlyDigits, maskByPersonType, maxDigitsByPersonType } from "@/lib/utils";
 import { ActiveToggle } from "@/components/ActiveToggle";
@@ -22,6 +23,14 @@ const CustomerCreate = () => {
   const [segment, setSegment] = useState<"juridica" | "fisica">("juridica");
   const [active, setActive] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
+  const [priceTables, setPriceTables] = useState<PriceTableDTO[]>([]);
+  const [priceTableId, setPriceTableId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    fetchPriceTables()
+      .then(setPriceTables)
+      .catch(() => setPriceTables([]));
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -33,6 +42,7 @@ const CustomerCreate = () => {
         phone: phone || null,
         person_type,
         active: active,
+        price_table_id: priceTableId ? Number(priceTableId) : null,
   user_attributes: { email, password: password || undefined },
       });
       toast({ title: "Cliente criado", description: "O cliente foi cadastrado com sucesso." });
@@ -55,10 +65,18 @@ const CustomerCreate = () => {
         </div>
 
         <Card className="p-4 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="name">Nome</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
+              <Label>Tipo pessoa</Label>
+              <Select value={segment} onValueChange={(value) => setSegment(value as "juridica" | "fisica")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Segmento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="juridica">Jurídica</SelectItem>
+                  <SelectItem value="fisica">Física</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="document">{segment === "juridica" ? "CNPJ" : "CPF"}</Label>
@@ -74,26 +92,38 @@ const CustomerCreate = () => {
               />
             </div>
             <div>
+              <Label htmlFor="name">Nome</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
               <Label htmlFor="email">E-mail</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
-            </div>
-            <div>
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
             </div>
             <div>
               <Label htmlFor="phone">Telefone</Label>
               <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
             </div>
             <div>
-              <Label>Tipo pessoa</Label>
-              <Select value={segment} onValueChange={(value) => setSegment(value as "juridica" | "fisica")}>
+              <Label htmlFor="password">Senha</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+          </div>  
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+            <div>
+              <Label>Tabela de preço</Label>
+              <Select value={priceTableId ?? "__none__"} onValueChange={(v) => setPriceTableId(v === "__none__" ? null : v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Segmento" />
+                  <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="juridica">Jurídica</SelectItem>
-                  <SelectItem value="fisica">Física</SelectItem>
+                  <SelectItem value="__none__">Sem tabela de preço</SelectItem>
+                  {priceTables.map((pt) => (
+                    <SelectItem key={pt.id} value={String(pt.id)}>
+                      {pt.description}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

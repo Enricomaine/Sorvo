@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Edit, Filter, Plus, Phone, Mail, IdCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchCustomers, CustomerDTO } from "@/lib/customers";
+import { maskByPersonType, onlyDigits } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const Customers = () => {
@@ -92,12 +93,6 @@ const Customers = () => {
                 <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Segmento" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos segmentos</SelectItem>
-                  <SelectItem value="varejo">Varejo</SelectItem>
-                  <SelectItem value="atacado">Atacado</SelectItem>
-                  <SelectItem value="servicos">Serviços</SelectItem>
-                </SelectContent>
               </Select>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger className="w-full sm:w-40">
@@ -127,7 +122,7 @@ const Customers = () => {
                 <div className="min-w-0">
                   <div className="font-semibold text-foreground truncate">{c.name}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><IdCard className="h-3 w-3" />{c.document || "—"}</span>
+                    <span className="inline-flex items-center gap-1"><IdCard className="h-3 w-3"/>{maskByPersonType(onlyDigits(c.document || ""), c.person_type === "business" ? "juridica" : "fisica") || "—"}</span>
                     <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" />{c.user?.email || "—"}</span>
                     <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone || "—"}</span>
                   </div>
@@ -173,7 +168,7 @@ const Customers = () => {
               {!loading && !error && filtered.map((c) => (
                 <tr key={c.id} className="border-t hover:bg-muted/40">
                   <td className="py-3 px-4 font-medium text-foreground">{c.name}</td>
-                  <td className="py-3 px-4">{c.document}</td>
+                  <td className="py-3 px-4">{maskByPersonType(onlyDigits(c.document || ""), c.person_type === "business" ? "juridica" : "fisica") || "—"}</td>
                   <td className="py-3 px-4">{c.user?.email || "—"}</td>
                   <td className="py-3 px-4">{c.phone || "—"}</td>
                   <td className="py-3 px-4">
