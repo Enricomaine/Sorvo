@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { createSeller } from "@/lib/sellers";
 import { useToast } from "@/hooks/use-toast";
+import { ActiveToggle } from "@/components/ActiveToggle";
 
 const SellerCreate = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const SellerCreate = () => {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [personType, setPersonType] = useState("juridica");
-  const [status, setStatus] = useState("ativo");
+  const [active, setActive] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -30,7 +31,7 @@ const SellerCreate = () => {
         document: document || null,
         phone: phone || null,
         person_type,
-        active: status === "ativo",
+        active: active,
         user_attributes: { email, password: password || undefined },
       });
       toast({ title: "Vendedor criado", description: "O vendedor foi cadastrado com sucesso." });
@@ -82,18 +83,7 @@ const SellerCreate = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ativo">Ativo</SelectItem>
-                  <SelectItem value="inativo">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ActiveToggle checked={active} onChange={setActive} />
             <div>
               <Label htmlFor="password">Senha</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />

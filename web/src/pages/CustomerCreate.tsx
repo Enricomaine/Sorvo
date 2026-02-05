@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { createCustomer } from "@/lib/customers";
 import { useToast } from "@/hooks/use-toast";
+import { onlyDigits, maskByPersonType, maxDigitsByPersonType } from "@/lib/utils";
+import { ActiveToggle } from "@/components/ActiveToggle";
 
 const CustomerCreate = () => {
   const navigate = useNavigate();
@@ -17,8 +19,8 @@ const CustomerCreate = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [segment, setSegment] = useState("juridica");
-  const [status, setStatus] = useState("ativo");
+  const [segment, setSegment] = useState<"juridica" | "fisica">("juridica");
+  const [active, setActive] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -27,10 +29,10 @@ const CustomerCreate = () => {
       const person_type = segment === "juridica" ? "business" : "person";
       await createCustomer({
         name,
-        document: document || null,
+        document: onlyDigits(document) || null,
         phone: phone || null,
         person_type,
-        active: status === "ativo",
+        active: active,
   user_attributes: { email, password: password || undefined },
       });
       toast({ title: "Cliente criado", description: "O cliente foi cadastrado com sucesso." });
@@ -59,8 +61,17 @@ const CustomerCreate = () => {
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
             </div>
             <div>
-              <Label htmlFor="document">Documento</Label>
-              <Input id="document" value={document} onChange={(e) => setDocument(e.target.value)} placeholder="CPF/CNPJ" />
+              <Label htmlFor="document">{segment === "juridica" ? "CNPJ" : "CPF"}</Label>
+              <Input
+                id="document"
+                value={maskByPersonType(document, segment)}
+                onChange={(e) => {
+                  const raw = onlyDigits(e.target.value);
+                  setDocument(raw.slice(0, maxDigitsByPersonType(segment)));
+                }}
+                inputMode="numeric"
+                placeholder={segment === "juridica" ? "00.000.000/0000-00" : "000.000.000-00"}
+              />
             </div>
             <div>
               <Label htmlFor="email">E-mail</Label>
@@ -76,7 +87,7 @@ const CustomerCreate = () => {
             </div>
             <div>
               <Label>Tipo pessoa</Label>
-              <Select value={segment} onValueChange={setSegment}>
+              <Select value={segment} onValueChange={(value) => setSegment(value as "juridica" | "fisica")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Segmento" />
                 </SelectTrigger>
@@ -86,18 +97,7 @@ const CustomerCreate = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ativo">Ativo</SelectItem>
-                  <SelectItem value="inativo">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ActiveToggle checked={active} onChange={setActive} />
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">

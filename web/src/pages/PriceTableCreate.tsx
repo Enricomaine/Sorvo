@@ -9,13 +9,14 @@ import { useState } from "react";
 import { ItemPriceSelector, TableItemPrice } from "@/components/ui/item-price-selector";
 import { createPriceTable } from "@/lib/priceTables";
 import { useToast } from "@/hooks/use-toast";
+import { ActiveToggle } from "@/components/ActiveToggle";
 
 const PriceTableCreate = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("active");
+  const [active, setActive] = useState<boolean>(true);
   const [tableItems, setTableItems] = useState<TableItemPrice[]>([]);
 
   const handleSave = async () => {
@@ -31,7 +32,7 @@ const PriceTableCreate = () => {
       await createPriceTable({
         description: description.trim(),
         observation: name || null,
-        active: status === "active",
+        active: active,
         price_table_items_attributes: tableItems
           .filter((ti) => ti.id && !isNaN(Number(ti.id)))
           .map((ti) => ({
@@ -67,18 +68,7 @@ const PriceTableCreate = () => {
               <Label htmlFor="description">Descrição</Label>
               <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Detalhes" />
             </div>
-            <div>
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativa</SelectItem>
-                  <SelectItem value="inactive">Inativa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ActiveToggle checked={active} onChange={setActive} />
             <div className="sm:col-span-2">
               <ItemPriceSelector value={tableItems} onChange={setTableItems} />
             </div>

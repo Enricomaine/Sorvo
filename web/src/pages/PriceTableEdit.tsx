@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { fetchPriceTable, updatePriceTable, PriceTableDTO } from "@/lib/priceTables";
 import { ItemPriceSelector, TableItemPrice } from "@/components/ui/item-price-selector";
 import { useToast } from "@/hooks/use-toast";
+import { ActiveToggle } from "@/components/ActiveToggle";
 
 const PriceTableEdit = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const PriceTableEdit = () => {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("active");
+  const [active, setActive] = useState<boolean>(true);
   const [tableItems, setTableItems] = useState<TableItemPrice[]>([]);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ const PriceTableEdit = () => {
     if (table) {
       setName(table.observation || "");
       setDescription(table.description || "");
-      setStatus(table.active ? "active" : "inactive");
+      setActive(!!table.active);
       setTableItems(
         (table.price_table_items || []).map((pti) => ({
           id: String(pti.item_id),
@@ -59,7 +60,7 @@ const PriceTableEdit = () => {
       await updatePriceTable(id, {
         description: description.trim(),
         observation: name || null,
-        active: status === "active",
+        active: active,
         price_table_items_attributes: tableItems
           .filter((ti) => ti.id && !isNaN(Number(ti.id)))
           .map((ti) => ({
@@ -96,18 +97,7 @@ const PriceTableEdit = () => {
                 <Label htmlFor="description">Descrição</Label>
                 <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
-              <div>
-                <Label>Status</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Ativa</SelectItem>
-                    <SelectItem value="inactive">Inativa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ActiveToggle checked={active} onChange={setActive} />
               <div className="sm:col-span-2">
                 <ItemPriceSelector value={tableItems} onChange={setTableItems} />
               </div>

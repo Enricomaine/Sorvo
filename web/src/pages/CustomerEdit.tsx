@@ -8,6 +8,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { fetchCustomer, updateCustomer, CustomerDTO } from "@/lib/customers";
 import { useToast } from "@/hooks/use-toast";
+import { onlyDigits, maskByPersonType, maxDigitsByPersonType } from "@/lib/utils";
+import { ActiveToggle } from "@/components/ActiveToggle";
 
 const CustomerEdit = () => {
   const navigate = useNavigate();
@@ -33,17 +35,17 @@ const CustomerEdit = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [personType, setPersonType] = useState("juridica");
-  const [status, setStatus] = useState("ativo");
+  const [personType, setPersonType] = useState<"juridica" | "fisica">("juridica");
+  const [active, setActive] = useState<boolean>(true);
 
   useEffect(() => {
     if (customer) {
       setName(customer.name || "");
-      setDocument(customer.document || "");
+      setDocument(onlyDigits(customer.document || ""));
       setEmail(customer.user?.email || "");
       setPhone(customer.phone || "");
       setPersonType(customer.person_type === "business" ? "juridica" : "fisica");
-      setStatus(customer.active ? "ativo" : "inativo");
+      setActive(!!customer.active);
     }
   }, [customer]);
 
@@ -54,10 +56,10 @@ const CustomerEdit = () => {
       const person_type = personType === "juridica" ? "business" : "person";
       await updateCustomer(id, {
         name,
-        document: document || null,
+        document: onlyDigits(document) || null,
         phone: phone || null,
         person_type,
-        active: status === "ativo",
+        active: active,
         user_attributes: { email, password: password || undefined },
       });
       toast({ title: "Cliente salvo", description: "As alterações foram aplicadas." });
@@ -89,8 +91,17 @@ const CustomerEdit = () => {
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="document">Documento</Label>
-                <Input id="document" value={document} onChange={(e) => setDocument(e.target.value)} />
+                <Label htmlFor="document">{personType === "juridica" ? "CNPJ" : "CPF"}</Label>
+                <Input
+                  id="document"
+                  value={maskByPersonType(document, personType)}
+                  onChange={(e) => {
+                    const raw = onlyDigits(e.target.value);
+                    setDocument(raw.slice(0, maxDigitsByPersonType(personType)));
+                  }}
+                  inputMode="numeric"
+                  placeholder={personType === "juridica" ? "00.000.000/0000-00" : "000.000.000-00"}
+                />
               </div>
               <div>
                 <Label htmlFor="email">E-mail</Label>
@@ -106,7 +117,7 @@ const CustomerEdit = () => {
               </div>
               <div>
                 <Label>Tipo pessoa</Label>
-                <Select value={personType} onValueChange={setPersonType}>
+                <Select value={personType} onValueChange={(value) => setPersonType(value as "juridica" | "fisica")}>
                   <SelectTrigger>
                     <SelectValue placeholder="Segmento" />
                   </SelectTrigger>
@@ -116,18 +127,7 @@ const CustomerEdit = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Status</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ActiveToggle checked={active} onChange={setActive} />
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
